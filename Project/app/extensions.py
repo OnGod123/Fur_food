@@ -1,19 +1,49 @@
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import declarative_base
 from flask_socketio import SocketIO
 import redis
 from minio import Minio
 from typing import Optional
 from flask import Flask
-
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 
 """create uninitialized extension objects to avoid circular imports"""
-db = SQLAlchemy()
+Base = declarative_base()
+engine = None
+SessionLocal = None
 socketio = SocketIO(cors_allowed_origins="*")  
+
+def init_db(app: Flask):
+    """Initialize SQLAlchemy engine & sessionmaker"""
+    global engine, SessionLocal
+    DATABASE_URL = app.config.get("SQLALCHEMY_DATABASE_URI", "sqlite:///./test.db")
+    engine = create_engine(DATABASE_URL, echo=True, future=True)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    return engine, SessionLocal
 
 """ resources that require app config — created in init_... functions"""
 redis_client: Optional[redis.Redis] = None
 minio_client: Optional[Minio] = None
 
+def get_session():
+    if SessionLocal is None:
+        raise RuntimeError("Database not initialized. Call init_db(app) first.")
+    return SessionLocal()
+
+
+# ⭐ EVEN BETTER: Context manager
+@contextmanager
+def session_scope():
+    session = get_session()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 def init_redis(app: Flask):
     """Initialize the redis_client using app config. Returns the client."""

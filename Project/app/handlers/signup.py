@@ -1,52 +1,21 @@
 from flask import Blueprint, request, jsonify, redirect, url_for, current_app, render_template
-from app.extensions import db
+from app.extensions import session_scope
 from app.Database.user_models import User
 from werkzeug.security import generate_password_hash
 import re
+from app.utils.jwt_tokens.generate_jwt import create_jwt_token
+
 
 signup_bp = Blueprint("auth_signup", __name__)
 
 
 @signup_bp.route("/signup", methods=["GET"])
 def signup_get() -> str:
-    """
-    Render the signup form.
-
-    Returns
-    -------
-    str
-        HTML template for the signup page.
-    """
     return render_template("signup.html")
 
 
 @signup_bp.route("/signup", methods=["POST"])
 def signup_post():
-    """
-    JSON-based signup endpoint.
-
-    Expected JSON payload:
-        {
-            "email": "user@example.com",
-            "phone": "+1234567890",
-            "password": "mypassword",
-            "name": "John Doe",
-            "metadata": { "referral": "friend", "country": "NG" }
-        }
-
-    Validates input, checks for duplicates, hashes password, creates a new user,
-    commits to the database, and returns a JSON response with signup status.
-    Optionally performs a redirect if query parameter 'redirect=true' is set.
-
-    Returns
-    -------
-    Response
-        JSON response containing:
-        - message: Signup status
-        - user: Dictionary representation of the newly created user
-        - redirect: URL to dashboard
-        Or performs HTTP redirect if requested.
-    """
     try:
         data = request.get_json(silent=True)
         if not data:
@@ -59,6 +28,7 @@ def signup_post():
         metadata: dict = data.get("metadata") or {}
         ip_address: str = request.remote_addr
 
+        # ----------------- VALIDATION -----------------
         if not email or not password or not name:
             return jsonify({"error": "Missing required fields (email, password, name)"}), 400
 
@@ -68,51 +38,65 @@ def signup_post():
         if len(password) < 6:
             return jsonify({"error": "Password must be at least 6 characters"}), 400
 
-        existing_user: User = db.session.query(User).filter(
-            (User.email == email) | (User.phone == phone)
-        ).first()
+        # ----------------- DATABASE -----------------
+        with session_scope() as session:
 
-        if existing_user:
-            signin_url = url_for("auth_login.login_get")  # your login route
-            return jsonify({
-                "message": "Account already created. Please sign in.",
-                "redirect": signin_url,
-                "user_id": existing_user.id,
-                "email": existing_user.email,
-            }), 409
-        # --------------------------
+            # Check if user exists
+            existing_user = session.query(User).filter(
+                (User.email == email) | (User.phone == phone)
+            ).first()
 
-        password_hash: str = generate_password_hash(password)
+            if existing_user:
+                signin_url = url_for("auth_login.login_get")
+                return jsonify({
+                    "message": "Account already created. Please sign in.",
+                    "redirect": signin_url,
+                    "user_id": existing_user.id,
+                    "email": existing_user.email,
+                }), 409
 
-        new_user: User = User(
-            email=email,
-            phone=phone or None,
-            password_hash=password_hash,
-            name=name,
-            last_ip=ip_address,
-            is_guest=False,
-            metadata=metadata,
-        )
-        db.session.add(new_user)
-        db.session.commit()
+            # Hash password
+            password_hash = generate_password_hash(password)
 
-        dashboard_url: str = url_for("user.dashboard", user_id=new_user.id)
-        token = generate_jwt(user_id=new_user.id, username=new_user.name)
+            # Create new user
+            new_user = User(
+                email=email,
+                phone=phone or None,
+                password_hash=password_hash,
+                name=name,
+                last_ip=ip_address,
+                is_guest=False,
+                metadata=metadata,
+            )
 
-        response = jsonify({
-            "message": "Signup successful",
-            "user": new_user.to_dict(),
-            "redirect": dashboard_url,
-            "token": token
-        })
-        response.status_code = 201
+            session.add(new_user)
+            session.flush()  # ensures new_user.id is available
 
-        if request.args.get("redirect") == "true":
-            return redirect(dashboard_url)
+            # ----------------- JWT TOKEN -----------------
+            # EXACTLY YOUR REQUIRED FORMAT
+            token = create_jwt_token(
+                user_id=new_user.id,
+                username=new_user.name,
+                password=new_user.password  # If this field doesn't exist, use new_user.password_hash
+            )
 
-        return response
+            # ----------------- RESPONSE -----------------
+            dashboard_url = url_for("user.dashboard", user_id=new_user.id)
+
+            response = jsonify({
+                "message": "Signup successful",
+                "user": new_user.to_dict(),
+                "redirect": dashboard_url,
+                "token": token
+            })
+            response.status_code = 201
+
+            if request.args.get("redirect") == "true":
+                return redirect(dashboard_url)
+
+            return response
 
     except Exception as e:
         current_app.logger.exception("Signup error")
-        db.session.rollback()
-        return jsonify({"error": "Server error", "details": str(e)}), 500
+        return jsonify({"error": "Server error"}), 500
+
