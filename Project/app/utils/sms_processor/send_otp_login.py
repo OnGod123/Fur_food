@@ -1,6 +1,7 @@
-from app.sms_processor.twilio_sms import twilio_send_sms
-from app.sms_processor.gammu_sms import send_sms as gammu_send_sms
-from app.sms_processor.otp_service import generate_and_store_otp
+from app.utils.sms_processor.twilio_sms import twilio_send_sms
+from app.utils.sms_processor.gammu_sms import send_sms as gammu_send_sms
+from app.utils.sms_processor.otp_service import generate_and_store_otp
+
 
 
 def send_otp_verification(phone: str, context="login", provider="twilio"):
