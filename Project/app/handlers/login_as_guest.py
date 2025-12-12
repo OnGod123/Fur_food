@@ -6,7 +6,7 @@ from app.extensions import session_scope
 
 loginas_guest_bp = Blueprint("auth_bp", __name__)
 
-@loginas_guest.route("/auth/login-guest", methods=["POST"])
+@loginas_guest_bp.route("/auth/login-guest", methods=["POST"])
 def login_guest():
     """
     Allow a user to login as a guest. A new UUID is generated for both
