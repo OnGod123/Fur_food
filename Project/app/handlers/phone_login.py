@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.database.user_models import User
-from app.utils.services import send_sms
+from app.Database.user_models import User
 from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 from app.utils.sms_processor.send_otp_login import send_otp_verification
 from app.utils.sms_processor.verify_otp_login import verify_otp_code

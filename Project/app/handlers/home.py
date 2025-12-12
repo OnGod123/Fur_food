@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, current_app, jsonify
 from urllib.parse import quote
 import requests
-from app.handlers.login_as_guest import auth_login_guest
+from app.handlers.login_as_guest import loginas_guest_bp
 from app.handlers.phone_login import auth_bp_phone
 from app.handlers.signup import signup_bp
 from app.handlers.Google_login import auth_bp
