@@ -7,12 +7,15 @@ from flask import Flask
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from contextlib import contextmanager
+from authlib.integrations.flask_client import OAuth
 
 """create uninitialized extension objects to avoid circular imports"""
 Base = declarative_base()
 engine = None
 SessionLocal = None
 socketio = SocketIO(cors_allowed_origins="*")  
+r = None
+oauth = OAuth()
 
 def init_db(app: Flask):
     """Initialize SQLAlchemy engine & sessionmaker"""
@@ -32,6 +35,12 @@ def get_session():
         raise RuntimeError("Database not initialized. Call init_db(app) first.")
     return SessionLocal()
 
+def init_redis(app):
+    global r
+    r = redis.from_url(
+        app.config["REDIS_URL"],
+        decode_responses=True
+    )
 
 # ⭐ EVEN BETTER: Context manager
 @contextmanager

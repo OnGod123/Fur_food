@@ -4,6 +4,7 @@ class BaseConfig:
     
     SQLALCHEMY_DATABASE_URI = os.getenv("DB_URI", "sqlite:///./dev.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SOCKETIO_MESSAGE_QUEUE = "redis://localhost:6379/0"
 
     
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

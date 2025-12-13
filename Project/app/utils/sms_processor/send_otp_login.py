@@ -1,5 +1,5 @@
 from app.utils.sms_processor.twilio_sms import twilio_send_sms
-from app.utils.sms_processor.gammu_sms import send_sms as gammu_send_sms
+from app.utils.sms_processor. send_otp_gammu import send_sms as gammu_send_sms
 from app.utils.sms_processor.otp_service import generate_and_store_otp
 
 

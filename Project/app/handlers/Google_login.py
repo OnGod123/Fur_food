@@ -14,10 +14,10 @@ from flask import (
     make_response,
     current_app,
 )
-from app.extensions import oauth, r, session_scope
-from app.database.user_models import User
-from app.database.signinmodels import Signin
-from authlib.integrations.flask_client import OAuth
+from app.extensions import  r, session_scope
+from app.Database.user_models import User
+from app.Database.signinmodels import Signin
+from app.extensions import oauth
 from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 import uuid
 import os
