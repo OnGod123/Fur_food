@@ -6,7 +6,7 @@ from app.utils.sms_processor.verify_otp_login import verify_otp_code
 from app.extensions import session_scope
 import uuid
 
-auth_bp_phone = Blueprint("auth_phone", __name__, url_prefix= "phone_login")
+auth_bp_phone = Blueprint("auth_phone", __name__, url_prefix= "/phone_login")
 
 @auth_bp_phone.route("/auth/request-login-token", methods=["POST"])
 def request_login_token():

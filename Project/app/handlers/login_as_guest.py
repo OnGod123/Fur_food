@@ -4,7 +4,7 @@ from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 import uuid
 from app.extensions import session_scope
 
-loginas_guest_bp = Blueprint("auth_bp", __name__)
+loginas_guest_bp = Blueprint("auth_bp", __name__, url_prefix="/Visit_as_guest")
 
 @loginas_guest_bp.route("/auth/login-guest", methods=["POST"])
 def login_guest():
