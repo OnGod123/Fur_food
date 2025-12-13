@@ -18,7 +18,17 @@ def create_app(config_object=None):
     socketio.init_app(app, message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE"))
 
     from app.handlers.home import home_bp
+    from app.handlers.Google_login import auth_bp
+    from app.handlers.phone_login import auth_bp_phone
+    from app.handlers.login_as_guest import loginas_guest_bp
+    from app.handlers.signup import signup_bp
+
+
     app.register_blueprint(home_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp_phone)
+    app.register_blueprint(loginas_guest_bp)
+    app.register_blueprint(signup_bp)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

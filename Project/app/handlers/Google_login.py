@@ -22,7 +22,7 @@ from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 import uuid
 import os
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth_guest", __name__, url_prefix="/auth")
 
 google = oauth.register(
     name="google",

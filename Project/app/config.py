@@ -6,6 +6,10 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SOCKETIO_MESSAGE_QUEUE = "redis://localhost:6379/0"
 
+    TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+    TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+    TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER")
+
     
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
