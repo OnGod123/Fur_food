@@ -6,7 +6,7 @@ import re
 from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 
 
-signup_bp = Blueprint("auth_signup", __name__)
+signup_bp = Blueprint("auth_signup", __name__, url_prefix="create_account")
 
 
 @signup_bp.route("/signup", methods=["GET"])
