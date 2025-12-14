@@ -6,7 +6,7 @@ from app.handlers.phone_login import auth_bp_phone
 from app.handlers.signup import signup_bp
 from app.handlers.Google_login import auth_bp
 
-home_bp = Blueprint("home_bp", __name__, template_folder="templates")
+home_bp = Blueprint("home_bp", __name__, template_folder="../templates/html")
 
 
 @home_bp.route("/", methods=["GET", "POST"])
