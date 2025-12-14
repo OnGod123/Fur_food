@@ -38,11 +38,11 @@ google = oauth.register(
 
 @auth_bp.route("/google/login")
 def google_login():
-    redirect_uri = url_for("auth.google_callback", _external=True)
+    redirect_uri = url_for("auth_guest.google_callback", _external=True)
     return google.authorize_redirect(redirect_uri)
 
 
-@auth_bp.route("/auth/google/callback")
+@auth_bp.route("/google/callback")
 def google_callback():
     token = google.authorize_access_token()
     user_info = google.get("userinfo").json()

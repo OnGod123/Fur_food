@@ -14,7 +14,7 @@ def create_app(config_object=None):
     init_db(app)
     oauth.init_app(app)
 
-    # Remove async_mode="asgi" → Eventlet will handle async internally
+    
     socketio.init_app(app, message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE"))
 
     from app.handlers.home import home_bp
@@ -32,7 +32,9 @@ def create_app(config_object=None):
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
-        SessionLocal.remove()
+        if SessionLocal:
+            SessionLocal.remove()
+
 
     return app, socketio
 

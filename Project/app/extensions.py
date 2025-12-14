@@ -13,7 +13,7 @@ from authlib.integrations.flask_client import OAuth
 Base = declarative_base()
 engine = None
 SessionLocal = None
-socketio = SocketIO(cors_allowed_origins="*")  
+socketio = SocketIO(async_mode="eventlet", cors_allowed_origins="*")  
 r = None
 oauth = OAuth()
 
