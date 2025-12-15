@@ -26,6 +26,7 @@ class Vendor(Base):
     Bussiness_account = Column(Integer, nullable=False)
     bank_code = Column(String(16), nullable=False)
     account_number = Column(String(20), nullable=False)
+    password_hash = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

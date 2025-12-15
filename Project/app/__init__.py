@@ -1,6 +1,6 @@
 from flask import Flask
 from app.config import DevelopmentConfig
-from app.extensions import init_db, socketio, init_redis, init_minio, SessionLocal, oauth
+from app.extensions import init_db, socketio, init_redis, init_minio, SessionLocal, oauth, init_redis
 
 def create_app(config_object=None):
     app = Flask(__name__, instance_relative_config=False)
@@ -13,6 +13,7 @@ def create_app(config_object=None):
     init_minio(app)
     init_db(app)
     oauth.init_app(app)
+    
 
     
     socketio.init_app(app, message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE"))
@@ -22,6 +23,7 @@ def create_app(config_object=None):
     from app.handlers.phone_login import auth_bp_phone
     from app.handlers.login_as_guest import loginas_guest_bp
     from app.handlers.signup import signup_bp
+    from app.handlers.dashboard import dashboard
 
 
     app.register_blueprint(home_bp)
@@ -29,6 +31,7 @@ def create_app(config_object=None):
     app.register_blueprint(auth_bp_phone)
     app.register_blueprint(loginas_guest_bp)
     app.register_blueprint(signup_bp)
+    app.register_blueprint(dashboard)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

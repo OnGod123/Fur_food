@@ -35,12 +35,11 @@ def get_session():
         raise RuntimeError("Database not initialized. Call init_db(app) first.")
     return SessionLocal()
 
-def init_redis(app):
+def init_redis(app: Flask):
     global r
-    r = redis.from_url(
-        app.config["REDIS_URL"],
-        decode_responses=True
-    )
+    redis_url = app.config.get("REDIS_URL", "redis://localhost:6379/0")
+    r = redis.from_url(redis_url, decode_responses=True)
+    return r
 
 # ⭐ EVEN BETTER: Context manager
 @contextmanager
@@ -54,13 +53,6 @@ def session_scope():
         raise
     finally:
         session.close()
-
-def init_redis(app: Flask):
-    """Initialize the redis_client using app config. Returns the client."""
-    global redis_client
-    redis_url = app.config.get("REDIS_URL", "redis://localhost:6379/0")
-    redis_client = redis.from_url(redis_url, decode_responses=True)
-    return redis_client
 
 
 def init_minio(app: Flask):
