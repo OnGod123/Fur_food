@@ -24,6 +24,8 @@ class OrderMultiple(Base):
     vendor_name = Column(String(255), nullable=False)
     product_name = Column(String(255), nullable=False)
     recipient_address = Column(String(255), nullable=False)
+    is_paid = Column(Boolean, default=False, nullable=False)
+    paid_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates = "multiple_orders")
 
