@@ -6,7 +6,9 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, Time, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.extensions import Base
-
+from app.Database.profile_merchant import Profile_Merchant
+from app.Database.user_models import User
+from app.Database.food_item import FoodItem
 
 class Vendor(Base):
     """
@@ -33,10 +35,10 @@ class Vendor(Base):
 
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    user = relationship("User", back_populates="vendor", uselist=False)
+    user = relationship("User", back_populates="vendors", uselist=False)
 
     menu_items = relationship("FoodItem", back_populates="vendor", cascade="all, delete-orphan")
-    merchants = relationship("ProfileMerchant", back_populates="vendor", cascade="all, delete-orphan")
+    merchants = relationship("Profile_Merchant", back_populates="vendor", cascade="all, delete-orphan")
 
     def to_dict(self, include_menu=False):
         data = {

@@ -23,6 +23,13 @@ def init_db(app: Flask):
     DATABASE_URL = app.config.get("SQLALCHEMY_DATABASE_URI", "sqlite:///./test.db")
     engine = create_engine(DATABASE_URL, echo=True, future=True)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    from app.Database.user_models import User
+    from app.Database.vendors_model import Vendor
+    from app.Database.profile_merchant import Profile_Merchant
+    from app.Database.food_item import FoodItem
+    from app.Database.order_single import OrderSingle
+    from app.Database.multiple_order import OrderMultiple
+
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal
 

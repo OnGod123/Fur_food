@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Time, ForeignKey
 from sqlalchemy.orm import relationship
 from app.extensions import Base
-
+from app.Database.profile_merchant import Profile_Merchant
 
 class FoodItem(Base):
     """
@@ -36,7 +36,7 @@ class FoodItem(Base):
 
     
     vendor = relationship("Vendor", back_populates="menu_items")
-    merchant = relationship("ProfileMerchant", back_populates="food_items")
+    merchant = relationship("Profile_Merchant")
 
     def to_dict(self):
         return {

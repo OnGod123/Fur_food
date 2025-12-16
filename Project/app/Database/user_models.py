@@ -1,10 +1,3 @@
-"""
-user_models.py
-
-Defines the User ORM model. This model represents a platform user including
-standard account fields, OAuth IDs, metadata, and relationships to wallets,
-orders, and vendors.
-"""
 
 from datetime import datetime
 from sqlalchemy import (
@@ -13,61 +6,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.extensions import Base
-
+from app.Database.wallet import Wallet
+from app.Database.order_single import  OrderSingle
+from app.Database.multiple_order import OrderMultiple
+from app.Database.profile_merchant import Profile_Merchant
 
 class User(Base):
-    """
-    Represents an application user, including authentication info,
-    contact details, and metadata.
-
-    Attributes
-    ----------
-    id : int
-        Primary key.
-    email : str | None
-        Optional email address. Expected: valid email or None.
-    phone : str | None
-        Optional phone number in E.164 or local format.
-    password_hash : str | None
-        Hashed password. Null for OAuth-only or guest accounts.
-    name : str | None
-        Display name.
-
-    google_id : str | None
-        Google OAuth ID. Unique.
-    facebook_id : str | None
-        Facebook OAuth ID. Unique.
-
-    last_ip : str | None
-        Last IP address seen. Useful for logging & fraud checks.
-
-    is_guest : bool
-        True for automatically generated guest accounts.
-
-    extra_data : dict
-        Arbitrary JSON metadata such as:
-        - email_verified: bool
-        - phone_verified: bool
-        - referral_code: str
-        - device_info: dict
-
-    created_at : datetime
-        Row creation timestamp.
-    updated_at : datetime
-        Last update timestamp.
-
-    Relationships
-    -------------
-    wallets : Wallet
-        One-to-one relationship with user wallet.
-    vendors : list[Vendor]
-        Vendor accounts owned by user.
-    orders : list[OrderSingle]
-        All single orders placed by the user.
-    multiple_orders : list[OrderMultiple]
-        Multiple-order batches placed by the user.
-    """
-
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -83,7 +27,6 @@ class User(Base):
     last_ip = Column(String(45), nullable=True)
     is_guest = Column(Boolean, nullable=False, default=False)
 
-    
     extra_data = Column(JSON, nullable=True, default=dict)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -91,25 +34,39 @@ class User(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
 
     __table_args__ = (
-        
         UniqueConstraint("email", name="uq_users_email", sqlite_on_conflict="IGNORE"),
         UniqueConstraint("phone", name="uq_users_phone", sqlite_on_conflict="IGNORE"),
         UniqueConstraint("google_id", name="uq_users_google_id", sqlite_on_conflict="IGNORE"),
         UniqueConstraint("facebook_id", name="uq_users_facebook_id", sqlite_on_conflict="IGNORE"),
     )
 
-    
-    wallets = relationship("Wallet", backref="user", uselist=False)
-    vendors = relationship("Vendor", backref="user", lazy=True)
-    orders = relationship("OrderSingle", backref="user", lazy=True)
-    multiple_orders = relationship("OrderMultiple", back_populates="user", lazy="dynamic")
+    wallet = relationship(
+        "Wallet",
+        back_populates="user",
+        uselist=False,
+    )
+
+    vendors = relationship(
+        "Vendor",
+        back_populates="user",
+    )
+
+    orders = relationship(
+        "OrderSingle",
+        back_populates="user",
+    )
+
+    multiple_orders = relationship(
+        "OrderMultiple",
+        back_populates="user",
+        lazy="dynamic",
+    )
 
     def to_dict(self) -> dict:
-        """Convert the User model into a serializable dictionary."""
         return {
             "id": self.id,
             "email": self.email,
