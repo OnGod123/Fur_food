@@ -2,7 +2,7 @@ import uuid
 import requests
 from flask import current_app
 
-def flutterwave_payout(amount, bank_code, account_number, email, narration="Vendor Payout"):
+def flutterwave_charge_bank(amount, bank_code, account_number, email, narration="Vendor Payout"):
     """
     Pay a vendor using Flutterwave v3 Transfer API.
 

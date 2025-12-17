@@ -3,7 +3,7 @@ from flask import current_app
 
 MONNIFY_BASE = "https://sandbox.monnify.com/api/v2"
 
-def monnify_payout(
+def monnify_charge_bank(
     amount: float,
     reference: str,
     narration: str,
