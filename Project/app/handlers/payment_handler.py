@@ -5,18 +5,19 @@ import uuid
 from app.db import session_scope
 from app.Database.order_single import OrderSingle
 from app.Database.multiple_order import OrderMultiple
-from app.Database.wallet import Walletcat 
+from app.Database.wallet import Wallet
 from app.Database.vendor_recieve_pay import Vendor_Payment
 from app.utils.pay_vendor_utils.engine import process_vendor_payout
-from app.utils.auth import verify_jwt_token
-from app.utils.otp import send_otp_payment, verify_otp_payment
+from app.utils.jwt_tokens.verify_user import verify_jwt_token
+from app.utils.sms_processor.verify_otp_paymemt import verify_otp_payment
+from app.utils.sms_processor.send_payment_otp import send_payment_otp_
 
 wallet_payment_bp = Blueprint("wallet_payment_bp", __name__, url_prefix="/make-payment")
 
 
 @wallet_payment_bp.route("/order/proceed-to-payment", methods=["POST"])
 @verify_jwt_token
-@send_otp_payment
+@send_payment_otp_
 @verify_otp_payment(context="payment")
 def proceed_to_payment():
     """
@@ -134,24 +135,6 @@ def proceed_to_payment():
             # =====================================================
             reference = str(uuid.uuid4())
 
-            wallet.balance -= order.total
-            order.is_paid = True
-            order.paid_at = datetime.utcnow()
-
-            payment = Vendor_Payment(
-                id=str(uuid.uuid4()),
-                user_id=g.user.id,
-                vendor_id=getattr(order, "vendor_id", None),
-                order_id=order.id,
-                amount=order.total,
-                status="successful",
-                payment_gateway="wallet",
-                reference=reference,
-                created_at=datetime.utcnow(),
-            )
-
-            session.add(payment)
-            # commit handled by session_scope()
 
         # =====================================================
         # 5️⃣ PAY VENDOR (AFTER COMMIT)
@@ -163,6 +146,34 @@ def proceed_to_payment():
             amount=order.total,
             provider="monnify"
         )
+        if process_vendor_payout:
+            try:
+                with session_scope() as session:
+
+                # 1️⃣ order lookup (already in DB)
+                # 2️⃣ wallet lock (FOR UPDATE)
+                # 3️⃣ balance check
+
+                # 4️⃣ PROCESS PAYMENT
+                reference = str(uuid.uuid4())
+
+                Wallet.debit(session, g.user.id, order.total)
+                order.is_paid = True
+                order.paid_at = datetime.utcnow()
+
+                payment = Vendor_Payment(
+                id=str(uuid.uuid4()),
+                user_id=g.user.id,
+                vendor_id=getattr(order, "vendor_id", None),
+                order_id=order.id,
+                amount=order.total,
+                status="successful",
+                payment_gateway="wallet",
+                reference=reference,
+                created_at=datetime.utcnow(),
+            )   
+
+        session.add(payment)
 
         # =====================================================
         # 6️⃣ DELIVERY
