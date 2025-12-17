@@ -51,7 +51,7 @@ class Wallet(Base):
 
 
     
-    return wallet.balance
+        return wallet.balance
 
 
     @staticmethod

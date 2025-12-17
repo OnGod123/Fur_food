@@ -3,7 +3,7 @@ Defines the OrderMultiple model for multi-vendor user orders.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, JSON, Float, String
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, JSON, Float, String, Boolean
 from sqlalchemy.orm import relationship
 from app.extensions import Base
 

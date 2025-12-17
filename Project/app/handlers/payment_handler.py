@@ -20,22 +20,15 @@ wallet_payment_bp = Blueprint("wallet_payment_bp", __name__, url_prefix="/make-p
 @send_payment_otp_
 @verify_otp_payment(context="payment")
 def proceed_to_payment():
-    """
-    Wallet payment handler.
-
-    Behavior:
-    - If order_id is supplied → pay that specific unpaid order
-    - If not supplied → pay the latest unpaid order (single or multiple)
-    """
 
     order_id = request.args.get("order_id")
 
     try:
+        # =====================================================
+        # DB READ + VALIDATION
+        # =====================================================
         with session_scope() as session:
 
-            # =====================================================
-            # 1️⃣ IF ORDER_ID IS PROVIDED → USE IT
-            # =====================================================
             if order_id:
                 single_order = (
                     session.query(OrderSingle)
@@ -58,9 +51,7 @@ def proceed_to_payment():
                 order = single_order or multiple_order
 
                 if not order:
-                    return jsonify({
-                        "error": "Order not found for this user"
-                    }), 404
+                    return jsonify({"error": "Order not found for this user"}), 404
 
                 if order.is_paid:
                     return jsonify({
@@ -69,9 +60,6 @@ def proceed_to_payment():
 
                 order_type = "single" if isinstance(order, OrderSingle) else "multiple"
 
-            # =====================================================
-            # 2️⃣ NO ORDER_ID → FETCH LATEST UNPAID ORDER
-            # =====================================================
             else:
                 single_order = (
                     session.query(OrderSingle)
@@ -99,11 +87,7 @@ def proceed_to_payment():
                     }), 404
 
                 if single_order and multiple_order:
-                    order = (
-                        single_order
-                        if single_order.created_at > multiple_order.created_at
-                        else multiple_order
-                    )
+                    order = single_order if single_order.created_at > multiple_order.created_at else multiple_order
                     order_type = "single" if order is single_order else "multiple"
                 elif single_order:
                     order = single_order
@@ -112,9 +96,6 @@ def proceed_to_payment():
                     order = multiple_order
                     order_type = "multiple"
 
-            # =====================================================
-            # 3️⃣ WALLET (LOCKED)
-            # =====================================================
             wallet = (
                 session.query(Wallet)
                 .filter(Wallet.user_id == g.user.id)
@@ -131,37 +112,19 @@ def proceed_to_payment():
                 }), 400
 
             # =====================================================
-            # 4️⃣ PROCESS PAYMENT
+            # ATOMIC PAYMENT + VENDOR PAYOUT (RACE WINDOW REMOVED)
             # =====================================================
             reference = str(uuid.uuid4())
 
+            # 1️⃣ Debit wallet
+            Wallet.debit(session, g.user.id, order.total)
 
-        # =====================================================
-        # 5️⃣ PAY VENDOR (AFTER COMMIT)
-        # =====================================================
-        process_vendor_payout(
-            user_id=g.user.id,
-            vendor_id=getattr(order, "vendor_id", None),
-            order_id=order.id,
-            amount=order.total,
-            provider="monnify"
-        )
-        if process_vendor_payout:
-            try:
-                with session_scope() as session:
+            # 2️⃣ Mark order as paid
+            order.is_paid = True
+            order.paid_at = datetime.utcnow()
 
-                # 1️⃣ order lookup (already in DB)
-                # 2️⃣ wallet lock (FOR UPDATE)
-                # 3️⃣ balance check
-
-                # 4️⃣ PROCESS PAYMENT
-                reference = str(uuid.uuid4())
-
-                Wallet.debit(session, g.user.id, order.total)
-                order.is_paid = True
-                order.paid_at = datetime.utcnow()
-
-                payment = Vendor_Payment(
+            # 3️⃣ Create payment record
+            payment = Vendor_Payment(
                 id=str(uuid.uuid4()),
                 user_id=g.user.id,
                 vendor_id=getattr(order, "vendor_id", None),
@@ -171,12 +134,20 @@ def proceed_to_payment():
                 payment_gateway="wallet",
                 reference=reference,
                 created_at=datetime.utcnow(),
-            )   
+            )
+            session.add(payment)
 
-        session.add(payment)
+            # 4️⃣ Pay vendor inside same transaction
+            process_vendor_payout(
+                user_id=g.user.id,
+                vendor_id=getattr(order, "vendor_id", None),
+                order_id=order.id,
+                amount=order.total,
+                provider="monnify"
+            )
 
         # =====================================================
-        # 6️⃣ DELIVERY
+        # DELIVERY URL (outside transaction)
         # =====================================================
         delivery_url = url_for(
             "delivery_bp.start_delivery_process",
@@ -199,4 +170,5 @@ def proceed_to_payment():
             "error": "Wallet payment failed",
             "details": str(e)
         }), 500
+
 
