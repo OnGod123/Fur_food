@@ -29,6 +29,7 @@ class Wallet(Base):
     # -------------------------------
 
     @staticmethod
+
     def debit(session, user_id: int, amount: int) -> int:
         if amount <= 0:
             raise ValueError("Amount must be positive")
@@ -47,12 +48,14 @@ class Wallet(Base):
             raise ValueError("Insufficient wallet balance")
 
         wallet.balance -= amount
-        session.commit()
-        session.refresh(wallet)
 
-        return wallet.balance
+
+    
+    return wallet.balance
+
 
     @staticmethod
+
     def credit(session, user_id: int, amount: int) -> int:
         if amount <= 0:
             raise ValueError("Amount must be positive")
@@ -68,8 +71,6 @@ class Wallet(Base):
             raise ValueError("Wallet not found")
 
         wallet.balance += amount
-        session.commit()
-        session.refresh(wallet)
-
         return wallet.balance
+
 

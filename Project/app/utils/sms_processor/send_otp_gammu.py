@@ -1,6 +1,6 @@
 import gammu
 
-def send_sms(phone: str, text: str) -> bool:
+def gammu_send_sms(phone: str, text: str) -> bool:
     """
     Send SMS using Gammu modem.
     Returns True if sent, False otherwise.
