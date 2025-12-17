@@ -29,6 +29,7 @@ def init_db(app: Flask):
     from app.Database.food_item import FoodItem
     from app.Database.order_single import OrderSingle
     from app.Database.multiple_order import OrderMultiple
+    from app.Database.vendor_recieve_pay import Vendor_Payment
 
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal

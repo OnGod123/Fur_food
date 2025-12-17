@@ -24,6 +24,7 @@ def create_app(config_object=None):
     from app.handlers.login_as_guest import loginas_guest_bp
     from app.handlers.signup import signup_bp
     from app.handlers.dashboard import dashboard
+    from app.handlers.payment_handler import wallet_payment_bp
 
 
     app.register_blueprint(home_bp)
@@ -32,6 +33,7 @@ def create_app(config_object=None):
     app.register_blueprint(loginas_guest_bp)
     app.register_blueprint(signup_bp)
     app.register_blueprint(dashboard)
+    app.register_blueprint(wallet_payment_bp)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

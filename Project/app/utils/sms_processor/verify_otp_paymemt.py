@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify, render_template, g
 from app.extensions import r, session_scope
-from app.database.user_models import User
+from app.Database.user_models import User
 from app.utils.sms_processor.verify_otp import verify_otp_code
 
 

@@ -4,7 +4,7 @@ from flask import current_app
 PAYSTACK_BASE = "https://api.paystack.co"
 
 
-def paystack_charge_bank(email: str, amount: float, bank_code: str, account_number: str,
+def paystark_charge_bank(email: str, amount: float, bank_code: str, account_number: str,
                     disable_otp: bool = False, otp: str = None) -> dict:
     """
     Perform a full Paystack payout to a Nigerian bank account, including transfer finalization.

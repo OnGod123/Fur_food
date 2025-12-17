@@ -2,12 +2,12 @@ from flask import Blueprint, jsonify, url_for, g, request
 from datetime import datetime
 import uuid
 
-from app.db import session_scope
+from app.extensions import session_scope
 from app.Database.order_single import OrderSingle
 from app.Database.multiple_order import OrderMultiple
 from app.Database.wallet import Wallet
 from app.Database.vendor_recieve_pay import Vendor_Payment
-from app.utils.pay_vendor_utils.engine import process_vendor_payout
+from app.utils.pay_vendors_utils.engine import process_vendor_payout
 from app.utils.jwt_tokens.verify_user import verify_jwt_token
 from app.utils.sms_processor.verify_otp_paymemt import verify_otp_payment
 from app.utils.sms_processor.send_payment_otp import send_payment_otp_

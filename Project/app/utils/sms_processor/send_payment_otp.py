@@ -1,9 +1,10 @@
 from functools import wraps
 from flask import jsonify, g
-from app.database.user_models import User
+from app.Database.user_models import User
 from app.extensions import session_scope
-from app.utils.sms_processor.twilo_sms import twilio_send_sms
+from app.utils.sms_processor.twilio_sms import twilio_send_sms
 from app.utils.sms_processor.send_otp_gammu import gammu_send_sms
+
 def send_otp_payment(phone: str, context="payment", provider="twilio"):
     """
     Generate a payment OTP, store it in Redis, and send it using
