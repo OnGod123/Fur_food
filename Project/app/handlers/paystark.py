@@ -7,7 +7,7 @@ from app.payments.factory import get_provider
 from app.utils.jwt_tokens.authentication import token_required
 from app.utils.helpers.tx_ref import generate_tx_ref
 
-paystack_bp = Blueprint("paystack", __name__, url_prefix="/api/paystack")
+paystack_bp = Blueprint("paystack", __name__, url_prefix="/api/paystark")
 
 
 
