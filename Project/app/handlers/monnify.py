@@ -7,7 +7,7 @@ from app.utils.jwt_tokens.authentication import token_required
 from app.utils.helpers.tx_ref import generate_tx_ref
 from app.Database.wallet import Wallet
 
-monnify_bp = Blueprint("monnify_bp", __name__,"/api/monnify")
+monnify_bp = Blueprint("monnify_bp", __name__,url_prefix = "/api/monnify")
 
 @monnify_bp.route("/wallet/load", methods=["POST"])
 @token_required
