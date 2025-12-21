@@ -1,6 +1,6 @@
 import requests
 from flask import current_app
-from app.utils.recieve_payment.base_provider import PaymentProvider
+from app.utils.recieve_payment_utils.base_provider import PaymentProvider
 
 
 class FlutterwaveProvider(PaymentProvider):

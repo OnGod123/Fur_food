@@ -2,9 +2,9 @@ from flask import Blueprint, request, jsonify, current_app, g
 from datetime import datetime
 from app.extensions import session_scope
 from app.Database.api_payment import Payment_api_database
-from app.payments.factory import get_provider
+from app.utils.recieve_payment_utils.factory import get_provider
 from app.utils.jwt_tokens.authentication import token_required
-erom app.utils.helpers.tx_ref import generate_tx_ref
+from app.utils.helpers.tx_ref import generate_tx_ref
 
 flutterwave_bp = Blueprint("flutterwave", __name__, url_prefix="/api/flutterwave")
 

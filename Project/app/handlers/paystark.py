@@ -3,11 +3,11 @@ from datetime import datetime
 
 from app.extensions import session_scope
 from app.Database.api_payment import Payment_api_database
-from app.payments.factory import get_provider
+from app.utils.recieve_payment_utils.factory import get_provider
 from app.utils.jwt_tokens.authentication import token_required
 from app.utils.helpers.tx_ref import generate_tx_ref
 
-paystack_bp = Blueprint("paystack", __name__, url_prefix="/api/paystark")
+paystark_bp = Blueprint("paystack", __name__, url_prefix="/api/paystark")
 
 
 
@@ -55,7 +55,7 @@ def initialize_payment():
     }), 201
 
 
-@paystack_bp.route("/wallet/webhook", methods=["POST"])
+@paystark_bp.route("/wallet/webhook", methods=["POST"])
 def paystark_webhook():
     raw_body = request.get_data()
     signature = request.headers.get("X-Paystack-Signature")
@@ -105,4 +105,4 @@ def paystark_webhook():
         session.add(txn)
 
     return "OK", 200
-`
+

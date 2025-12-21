@@ -1,16 +1,13 @@
-
-
 from flask import Blueprint, request, jsonify, current_app, g
 from datetime import datetime
 from app.extensions import session_scope
 from app.Database.api_payment import Payment_api_database
-from app.payments.factory import get_provider
+from app.utils.recieve_payment_utils.factory import get_provider
 from app.utils.jwt_tokens.authentication import token_required
 from app.utils.helpers.tx_ref import generate_tx_ref
-from app.models.wallet import Wallet
+from app.Database.wallet import Wallet
 
 monnify_bp = Blueprint("monnify_bp", __name__,"/api/monnify")
-
 
 @monnify_bp.route("/wallet/load", methods=["POST"])
 @token_required
