@@ -30,6 +30,7 @@ def init_db(app: Flask):
     from app.Database.order_single import OrderSingle
     from app.Database.multiple_order import OrderMultiple
     from app.Database.vendor_recieve_pay import Vendor_Payment
+    from app.Database.api_payment import Payment_api_database
 
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal
@@ -49,7 +50,7 @@ def init_redis(app: Flask):
     r = redis.from_url(redis_url, decode_responses=True)
     return r
 
-# ⭐ EVEN BETTER: Context manager
+
 @contextmanager
 def session_scope():
     session = get_session()
