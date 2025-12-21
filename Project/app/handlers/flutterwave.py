@@ -53,6 +53,17 @@ def initialize_payment():
     }), 201
 
 
+@flutterwave_bp.route("/wallet/load", methods=["GET"])
+@token_required
+def flutterwave_wallet_load_page():
+    """
+    Renders a Flutterwave wallet funding page.
+    The page will call POST /wallet/load via JS.
+    """
+    return render_template("flutterwave.html")
+
+
+
 
 @flutterwave_bp.route("/wallet/webhook", methods=["POST"])
 def flutterwave_webhook():

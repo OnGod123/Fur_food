@@ -10,6 +10,16 @@ from app.utils.helpers.tx_ref import generate_tx_ref
 paystark_bp = Blueprint("paystack", __name__, url_prefix="/api/paystark")
 
 
+@paystark_bp.route("/wallet/load", methods=["GET"])
+@token_required
+def wallet_load_page():
+    """
+    Renders a payment page.
+    The page will call the POST /wallet/load endpoint via JS.
+    """
+    return render_template("paystark.html")
+
+
 
 @paystark_bp.route("/wallet/load", methods=["POST"])
 @token_required

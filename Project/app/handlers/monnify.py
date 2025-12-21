@@ -53,6 +53,17 @@ def initialize_monnify_payment():
         "transaction_reference": payment["transaction_reference"],
     }), 201
 
+@monnify_bp.route("/wallet/load", methods=["GET"])
+@token_required
+def monnify_wallet_load_page():
+    """
+    Renders a Monnify wallet funding page.
+    The page will call POST /wallet/load via JS.
+    """
+    return render_template("monnify.html")
+
+
+
 @monnify_bp.route("/monnify/webhook", methods=["POST"])
 def monnify_webhook():
     raw_body = request.get_data()
