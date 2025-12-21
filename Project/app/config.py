@@ -68,6 +68,24 @@ class BaseConfig:
         "PAYMENT_REDIRECT_URL",
         "http://localhost:3000/payment/callback"
     )
+        # --------------------
+    # WALLET FUNDING PAGES (BACKEND GET ROUTES)
+    # --------------------
+    MONNIFY_WALLET_LOAD_URL = os.getenv(
+        "MONNIFY_WALLET_LOAD_URL",
+        "/api/monnify/wallet/load"
+    )
+
+    PAYSTACK_WALLET_LOAD_URL = os.getenv(
+        "PAYSTACK_WALLET_LOAD_URL",
+        "/api/paystark/wallet/load"
+    )
+
+    FLUTTERWAVE_WALLET_LOAD_URL = os.getenv(
+        "FLUTTERWAVE_WALLET_LOAD_URL",
+        "/api/flutterwave/wallet/load"
+    )
+
 
 
 class DevelopmentConfig(BaseConfig):

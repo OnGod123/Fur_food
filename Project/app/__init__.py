@@ -28,6 +28,7 @@ def create_app(config_object=None):
     from app.handlers.paystark import paystark_bp
     from app.handlers.monnify import monnify_bp
     from app.handlers.flutterwave import flutterwave_bp
+    from app.handlers.central_payment import wallet_bp
 
 
     app.register_blueprint(home_bp)
@@ -40,6 +41,7 @@ def create_app(config_object=None):
     app.register_blueprint(paystark_bp)
     app.register_blueprint(monnify_bp)
     app.register_blueprint(flutterwave_bp)
+    app.register_blueprint(wallet_bp)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
