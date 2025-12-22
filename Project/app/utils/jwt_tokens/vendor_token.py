@@ -1,7 +1,7 @@
 import jwt
 import hashlib
 from datetime import datetime, timedelta
-from app.config import SECRET_KEY
+from flask  import current_app
 
 def generate_vendor_jwt(vendor_id: int, business_name: str, vendor_password: str):
     """
@@ -16,14 +16,14 @@ def generate_vendor_jwt(vendor_id: int, business_name: str, vendor_password: str
         "exp": datetime.utcnow() + timedelta(days=7)
     }
 
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, current_app.config["secret_key"].upper, algorithm="HS256")
     return token
 
 
 
 def decode_vendor_jwt(vendor_token: str):
     try:
-        payload = jwt.decode(vendor_token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(vendor_token, current_app.config['secret_key'].upper, algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
         raise PermissionError("Vendor token expired")

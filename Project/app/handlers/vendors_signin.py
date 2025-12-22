@@ -1,15 +1,15 @@
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 from app.extensions import r, session_scope
-from app.database.vendor_models import Vendor
+from app.Database.vendors_model import Vendor
 from app.utils.jwt_tokens.vendor_token import generate_vendor_jwt
-from app.utils.jwt_tokens.authentication import token_required
+from app.utils.jwt_tokens.verify_user import verify_jwt_token
 
-vendor_bp_signin = Blueprint("vendor_bp", __name__, url_prefix="/vendor")
+bp_vendor_register = Blueprint("Blueprint_vendor_bp", __name__, url_prefix="/vendor")
 
 
 @verify_jwt_token
-@vendor_bp_signin.route("/signup", methods=["POST"])
+@bp_vendor_register.route("/signup", methods=["POST"])
 def signup_vendor():
     """
     Signup a new vendor.
@@ -57,7 +57,7 @@ def signup_vendor():
 
         r.set(f"vendor:{user.email}:id", new_vendor.id)
 
-        # Generate vendor JWT
+        
         vendor_jwt = generate_vendor_jwt(
         vendor_id=new_vendor.id,
         business_name=business_name,
