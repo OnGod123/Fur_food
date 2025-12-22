@@ -12,8 +12,8 @@ from app.utils.file_utils import validate_image_bytes
 from app.utils.jwt_tokens.authentication import vendor_required
 
 food_bp = Blueprint("food", __name__, url_prefix="/api/food")
-@vendor_required
 @food_bp.route("/items", methods=["POST"])
+
 @vendor_required
 def add_food_item():
     payload = request.get_json(force=True)

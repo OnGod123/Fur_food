@@ -5,11 +5,11 @@ from app.database.vendor_models import Vendor
 from app.utils.jwt_tokens.vendor_token import generate_vendor_jwt
 from app.utils.jwt_tokens.authentication import token_required
 
-vendor_bp_signin = Blueprint("vendor_bp", __name__)
+vendor_bp_signin = Blueprint("vendor_bp", __name__, url_prefix="/vendor")
 
 
 @verify_jwt_token
-@vendor_bp_signin.route("/vendor/signup", methods=["POST"] url_prefix="/vendor/signin")
+@vendor_bp_signin.route("/signup", methods=["POST"])
 def signup_vendor():
     """
     Signup a new vendor.
@@ -26,7 +26,7 @@ def signup_vendor():
     bank_code = data.get("bank_code")
     account_number = data.get("account_number")
 
-    # Validate required fields
+    
     if not all([business_name, business_address, vendor_password,
                 bussiness_account, bank_code, account_number]):
         return jsonify({
@@ -35,12 +35,11 @@ def signup_vendor():
         }), 400
 
     with session_scope() as session:
-        # Check if user is already a vendor
         existing_vendor = session.query(Vendor).filter_by(user_id=user.id).first()
         if existing_vendor:
             return jsonify({"error": "User already registered as vendor"}), 400
 
-        # Create vendor record
+        
         new_vendor = Vendor(
             Business_name=business_name,
             Business_address=business_address,
@@ -53,9 +52,9 @@ def signup_vendor():
         )
 
         session.add(new_vendor)
-        session.flush()  # flush to get new_vendor.id before commit
+        session.flush()  
 
-        # Cache vendor ID in Redis
+
         r.set(f"vendor:{user.email}:id", new_vendor.id)
 
         # Generate vendor JWT
@@ -66,7 +65,7 @@ def signup_vendor():
         )
 
 
-    # Commit happens automatically at the end of session_scope() block
+    
     return jsonify({
         "message": "Vendor registration successful",
         "vendor": new_vendor.to_dict(),

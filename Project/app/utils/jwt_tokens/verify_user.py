@@ -1,4 +1,4 @@
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, g
 from functools import wraps
 from app.utils.jwt_tokens.generate_jwt import decode_jwt_token
 from app.Database.user_models import User
@@ -25,6 +25,7 @@ def verify_jwt_token(func):
         
         with session_scope() as session:
             user = session.get(User, user_id)
+            g.user = user
 
             if not user:
                 return redirect(url_for("auth.signin"))

@@ -29,6 +29,8 @@ def create_app(config_object=None):
     from app.handlers.monnify import monnify_bp
     from app.handlers.flutterwave import flutterwave_bp
     from app.handlers.central_payment import wallet_bp
+    from app.handlers.vendor_signin import vendor_bp_signin
+    from app.handlers. food_upload_handler import food_bp
 
 
     app.register_blueprint(home_bp)
@@ -42,6 +44,9 @@ def create_app(config_object=None):
     app.register_blueprint(monnify_bp)
     app.register_blueprint(flutterwave_bp)
     app.register_blueprint(wallet_bp)
+    app.register_blueprint(vendor_bp_signin)
+    app.register_blueprint(food_bp)
+
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
