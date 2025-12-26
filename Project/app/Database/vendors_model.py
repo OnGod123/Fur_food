@@ -20,6 +20,8 @@ class Vendor(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     Business_name = Column(String(255), nullable=False, index=True)
     Business_address = Column(String(255), nullable=False)
+    Bussiness_email = Column(String(255), nullable= False)
+    Bussiness_Phone = Column(Integer, nullable = False)
 
     is_open = Column(Boolean, default=True)
     opening_time = Column(Time, nullable=True)
@@ -58,3 +60,4 @@ class Vendor(Base):
             data["menu_items"] = [item.to_dict() for item in self.menu_items]
 
         return data
+

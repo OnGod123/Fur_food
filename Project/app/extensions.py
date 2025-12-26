@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from contextlib import contextmanager
 from authlib.integrations.flask_client import OAuth
+from flask_socketio import SocketIO
 
 """create uninitialized extension objects to avoid circular imports"""
 Base = declarative_base()
@@ -31,6 +32,8 @@ def init_db(app: Flask):
     from app.Database.multiple_order import OrderMultiple
     from app.Database.vendor_recieve_pay import Vendor_Payment
     from app.Database.api_payment import Payment_api_database
+    from app.Database.order_single import OrderSingle
+    from app.Database.multiple_order import OrderMultiple
 
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal
@@ -74,4 +77,5 @@ def init_minio(app: Flask):
         secure=app.config.get("MINIO_SECURE", False),
     )
     return minio_client
- 
+
+socketio = SocketIO(async_mode="eventlet", cors_allowed_origins="*") 

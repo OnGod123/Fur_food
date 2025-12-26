@@ -15,7 +15,7 @@ from app.utils.sms_processor.send_payment_otp import send_payment_otp_
 wallet_payment_bp = Blueprint("wallet_payment_bp", __name__, url_prefix="/make-payment")
 
 
-@wallet_payment_bp.route("/order/proceed-to-payment", methods=["POST"])
+@wallet_payment_bp.route("/order/proceed-to-payment", methods=["GET"])
 @verify_jwt_token
 @send_payment_otp_
 @verify_otp_payment(context="payment")

@@ -1,5 +1,5 @@
 """
-Defines the OrderSingle model for single-vendor user orders.
+Defines the OrderMultiple model for multi-vendor user orders.
 """
 
 from datetime import datetime
@@ -8,16 +8,16 @@ from sqlalchemy.orm import relationship
 from app.extensions import Base
 
 
-class OrderSingle(Base):
+class OrderMultiple(Base):
     """
-    Represents a single vendor order made by a user.
+    Represents an order that includes multiple vendors/items by a user.
     """
 
-    __tablename__ = "order_single"
+    __tablename__ = "order_multiple"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    item_data = Column(JSON, nullable=False)
+    items_data = Column(JSON, nullable=False)
     total = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -25,13 +25,13 @@ class OrderSingle(Base):
     product_name = Column(String(255), nullable=False)
     recipient_address = Column(String(255), nullable=False)
 
-    user = relationship("User", backref="single_orders")
+    user = relationship("User", backref="multiple_orders")
 
     def to_dict(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "item_data": self.item_data,
+            "items_data": self.items_data,
             "total": self.total,
             "vendor_name": self.vendor_name,
             "product_name": self.product_name,
