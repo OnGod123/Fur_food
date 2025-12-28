@@ -10,18 +10,15 @@ from app.Database.vendors_model import Vendor
 from app.utils.jwt_tokens.authentication import token_required
 from app.utils.emails.send_email import send_email_notification
 from app.utils.whatsapp_utils import send_whatsapp_message
-from app.utils.websocket_utils import send_notification_async
-from app.utils.helpers.session import get_session
-from app.utils.decorators import check_if_guest, vendor_must_be_open
+from app.utils.websocket_utils.send_notification import send_notification_async
+from app.extensions import get_session
+from app.utils.vendors_utils.vendors_status import vendor_must_be_open
+from app.utils.jwt_tokens.guest_token import check_if_guest
 from app.utils.jwt_tokens.generate_jwt import encode_order_id
 
 
-multiple_order_bp = Blueprint(
-    "multiple_order_bp",
-    __name__,
-    url_prefix="/Order_multiple"
-)
 
+multiple_order_bp = Blueprint("multiple_order_bp", __name__, url_prefix="/Order_multiple")
 
 @multiple_order_bp.route("/items", methods=["POST", "GET"])
 @check_if_guest
@@ -155,16 +152,16 @@ def multiple_order_handler():
                 event_type="new_multi_order",
                 _external=True,
             )
-            jwt_token = None
+            order_token = None
         else:
-            jwt_token = encode_order_id(
+            order_token = encode_order_id(
                 {"order_id": order.id}
             )
             redirect_url = url_for(
-                "wallet_payment_bp.proceed_to_payment",
+                "wallet_payment_bp.start_payment",
                 order_id=order.id,
                 total=total,
-                token=jwt_token,
+                token=order_token,
                 _external=True,
             )
 
