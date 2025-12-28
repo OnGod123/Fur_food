@@ -2,6 +2,9 @@ import jwt
 import datetime
 from flask import current_app
 from app.extensions import r
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from flask import current_app
+
 
 def set_user_state(user_id, is_guest=False):
     """
@@ -61,6 +64,41 @@ def decode_jwt_token(token):
         return None
     except jwt.InvalidTokenError:
         return None
+
+def _get_serializer():
+    """
+    Create a serializer using the app SECRET_KEY
+    """
+    secret = current_app.config["SECRET_KEY"]
+    return URLSafeTimedSerializer(secret, salt="order-id")
+
+
+def encode_order_id(order_id: int | str) -> str:
+    """
+    Encode (sign) an order ID so it cannot be tampered with.
+    """
+    serializer = _get_serializer()
+    return serializer.dumps({"order_id": order_id})
+
+
+def decode_order_id(token: str, max_age: int | None = None) -> int | str:
+    """
+    Decode and verify an encoded order ID.
+
+    :param token: encoded order id
+    :param max_age: optional expiration time (seconds)
+    """
+    serializer = _get_serializer()
+
+    try:
+        data = serializer.loads(token, max_age=max_age)
+        return data["order_id"]
+
+    except SignatureExpired:
+        raise ValueError("Order ID token expired")
+
+    except BadSignature:
+        raise ValueError("Invalid order ID token")
 
 
 
