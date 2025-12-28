@@ -3,6 +3,7 @@ from functools import wraps
 from app.utils.jwt_tokens.generate_jwt import decode_jwt_token
 from app.Database.user_models import User
 from app.extensions import session_scope as session
+from flask import request, g, jsonify
 
 def token_required(func):
     @wraps(func)
