@@ -29,11 +29,11 @@ def init_db(app: Flask):
     from app.Database.profile_merchant import Profile_Merchant
     from app.Database.food_item import FoodItem
     from app.Database.order_single import OrderSingle
-    from app.Database.multiple_order import OrderMultiple
+    from app.Database.order_multiple import OrderMultiple
     from app.Database.vendor_recieve_pay import Vendor_Payment
     from app.Database.api_payment import Payment_api_database
     from app.Database.order_single import OrderSingle
-    from app.Database.multiple_order import OrderMultiple
+    from app.Database.order_multiple import OrderMultiple
 
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal
@@ -78,4 +78,14 @@ def init_minio(app: Flask):
     )
     return minio_client
 
-socketio = SocketIO(async_mode="eventlet", cors_allowed_origins="*") 
+def emit_to_room(room: str, event: str, data: dict):
+    """
+    Emit a Socket.IO event to a specific room.
+    Uses the globally initialized socketio instance.
+    """
+    socketio.emit(
+        event,
+        data,
+        room=room,
+    )
+ 

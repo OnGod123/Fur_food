@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, g, url_for
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import r
-from app.Database.multiple_order import OrderMultiple
+from app.Database.order_multiple import OrderMultiple
 from app.Database.order_single import OrderSingle
 from app.Database.notifications import Notification
 from app.Database.food_item import FoodItem

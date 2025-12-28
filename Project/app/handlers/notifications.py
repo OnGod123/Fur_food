@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.jwt_tokens.generate_jwt import decode_order_id
-from app.merchants.Database.order_single import OrderSingle
-from app.merchants.Database.order_multiple import OrderMultiple
-from .decorators import vendor_required
+from app.Database.order_single import OrderSingle
+from app.Database.order_multiple import OrderMultiple
+from app.utils.jwt_tokens.authentication import vendor_required
 
 notifications_bp = Blueprint("notifications_bp", __name__)
 

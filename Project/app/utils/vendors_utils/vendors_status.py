@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import jsonify, request
 from app.extensions import r, SessionLocal  # SessionLocal is your SQLAlchemy session factory
-from app.merchants.Database.vendors_data_base import Vendor
+from app.Database.vendors_model import Vendor
 import json
 
 VENDOR_STATUS_TTL = 300  # seconds

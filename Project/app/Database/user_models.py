@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from app.extensions import Base
 from app.Database.wallet import Wallet
 from app.Database.order_single import  OrderSingle
-from app.Database.multiple_order import OrderMultiple
+from app.Database.order_multiple import OrderMultiple
 from app.Database.profile_merchant import Profile_Merchant
 
 class User(Base):

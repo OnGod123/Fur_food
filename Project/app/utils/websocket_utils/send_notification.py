@@ -1,11 +1,8 @@
-from app.celery_app import celery
-from app.utils.websocket_utils import search_chat_room
+from app.utils.websocket_utils.websocket_redis import search_chat_room
 from app.extensions import emit_to_room
 from app.Database.notifications import Notification
-from app.Database.vendors_models import Vendor
+from app.Database.vendors_model import Vendor
 
-
-@celery.task(bind=True, max_retries=3)
 def send_notification_async(self, vendor_business_name, username, notif_dict):
     room_id = search_chat_room(username, vendor_business_name)
     if not room_id:

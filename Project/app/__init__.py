@@ -32,6 +32,8 @@ def create_app(config_object=None):
     from app.handlers.vendors_signin import bp_vendor_register
     from app.handlers.food_upload_handler import food_bp
     from app.handlers.multiple_order import multiple_order_bp
+    from app.handlers.order_single import single_order_bp
+    from app.handlers.notifications import notifications_bp
 
 
     app.register_blueprint(home_bp)
@@ -48,6 +50,8 @@ def create_app(config_object=None):
     app.register_blueprint(bp_vendor_register)
     app.register_blueprint(food_bp)
     app.register_blueprint(multiple_order_bp)
+    app.register_blueprint(single_order_bp)
+    app.register_blueprint(notifications_bp)
 
 
     @app.teardown_appcontext
