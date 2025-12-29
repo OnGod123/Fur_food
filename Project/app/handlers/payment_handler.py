@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, url_for, g, request
+from flask import Blueprint, request, jsonify, g, url_for
 from datetime import datetime
 import uuid
 
@@ -14,146 +14,142 @@ from app.utils.sms_processor.send_payment_otp import send_payment_otp_
 
 wallet_payment_bp = Blueprint("wallet_payment_bp", __name__, url_prefix="/make-payment")
 
+def handle_single_order(session, order, wallet):
+    reference = str(uuid.uuid4())
 
+    # Debit wallet
+    Wallet.debit(session, g.user.id, order.total)
+    order.is_paid = True
+    order.paid_at = datetime.utcnow()
+
+    payment = Vendor_Payment(
+        id=str(uuid.uuid4()),
+        user_id=g.user.id,
+        vendor_id=order.vendor_id,
+        order_id=order.id,
+        amount=order.total,
+        status="successful",
+        payment_gateway="wallet",
+        reference=reference,
+        created_at=datetime.utcnow()
+    )
+    session.add(payment)
+
+    # 🔹 Get vendor (REQUIRED)
+    vendor = session.query(Profile).filter_by(id=order.vendor_id).first()
+    if not vendor:
+        raise Exception("Vendor not found")
+
+    # Pay vendor
+    process_vendor_payout(
+        user_id=g.user.id,
+        vendor_id=order.vendor_id,
+        vendor=vendor,
+        order_id=order.id,
+        amount=order.total,
+        provider="monnify"
+    )
+
+    return reference
+
+
+
+def handle_multiple_order(session, order, wallet):
+    
+    items = getattr(order, "items_data", [])
+    if len(items) > 15:
+        return jsonify({"error": "Cannot pay more than 15 items in one transaction"}), 400
+
+    Wallet.debit(session, g.user.id, order.total)
+    order.is_paid = True
+    order.paid_at = datetime.utcnow()
+
+    for item in items:
+        vendor_id = item.get("vendor_id")
+        amount = item.get("price") * item.get("quantity")
+
+        payment = Vendor_Payment(
+            id=str(uuid.uuid4()),
+            user_id=g.user.id,
+            vendor_id=vendor_id,
+            order_id=order.id,
+            amount=amount,
+            status="successful",
+            payment_gateway="wallet",
+            reference=str(uuid.uuid4()),
+            created_at=datetime.utcnow()
+        )
+        session.add(payment)
+
+        # 🔹 Get vendor (REQUIRED)
+        vendor = session.query(Vendor).filter_by(id=vendor_id).first()
+        if not vendor:
+            raise Exception(f"Vendor not found: {vendor_id}")
+
+        process_vendor_payout(
+            user_id=g.user.id,
+            vendor_id=vendor_id,
+            vendor=vendor,
+            order_id=order.id,
+            amount=amount,
+            provider="monnify"
+        )
+
+    return str(uuid.uuid4())
+
+
+
+# ---------------- Main Route ----------------
 @wallet_payment_bp.route("/order/proceed-to-payment", methods=["GET"])
 @verify_jwt_token
 @send_payment_otp_
 @verify_otp_payment(context="payment")
 def proceed_to_payment():
-
     order_id = request.args.get("order_id")
 
     try:
-        # =====================================================
-        # DB READ + VALIDATION
-        # =====================================================
         with session_scope() as session:
 
+            # ---------------- Get Order ----------------
+            order = None
+            order_type = None
             if order_id:
-                single_order = (
-                    session.query(OrderSingle)
-                    .filter(
-                        OrderSingle.id == order_id,
-                        OrderSingle.user_id == g.user.id
-                    )
-                    .first()
-                )
-
-                multiple_order = (
-                    session.query(OrderMultiple)
-                    .filter(
-                        OrderMultiple.id == order_id,
-                        OrderMultiple.user_id == g.user.id
-                    )
-                    .first()
-                )
-
-                order = single_order or multiple_order
-
+                order_single = session.query(OrderSingle).filter_by(id=order_id, user_id=g.user.id).first()
+                order_multiple = session.query(OrderMultiple).filter_by(id=order_id, user_id=g.user.id).first()
+                order = order_single or order_multiple
                 if not order:
-                    return jsonify({"error": "Order not found for this user"}), 404
-
-                if order.is_paid:
-                    return jsonify({
-                        "error": "Order already paid. Please add a new order to cart."
-                    }), 400
-
+                    return jsonify({"error": "Order not found"}), 404
+                if getattr(order, "is_paid", False):
+                    return jsonify({"error": "Order already paid"}), 400
                 order_type = "single" if isinstance(order, OrderSingle) else "multiple"
-
             else:
-                single_order = (
-                    session.query(OrderSingle)
-                    .filter(
-                        OrderSingle.user_id == g.user.id,
-                        OrderSingle.is_paid.is_(False)
-                    )
-                    .order_by(OrderSingle.created_at.desc())
-                    .first()
-                )
-
-                multiple_order = (
-                    session.query(OrderMultiple)
-                    .filter(
-                        OrderMultiple.user_id == g.user.id,
-                        OrderMultiple.is_paid.is_(False)
-                    )
-                    .order_by(OrderMultiple.created_at.desc())
-                    .first()
-                )
-
-                if not single_order and not multiple_order:
-                    return jsonify({
-                        "error": "No unpaid order found. Please add items to cart."
-                    }), 404
-
-                if single_order and multiple_order:
-                    order = single_order if single_order.created_at > multiple_order.created_at else multiple_order
-                    order_type = "single" if order is single_order else "multiple"
-                elif single_order:
-                    order = single_order
-                    order_type = "single"
+                # get latest unpaid order
+                order_single = session.query(OrderSingle).filter_by(user_id=g.user.id, is_paid=False).order_by(OrderSingle.created_at.desc()).first()
+                order_multiple = session.query(OrderMultiple).filter_by(user_id=g.user.id, is_paid=False).order_by(OrderMultiple.created_at.desc()).first()
+                if not order_single and not order_multiple:
+                    return jsonify({"error": "No unpaid order found"}), 404
+                if order_single and order_multiple:
+                    order = order_single if order_single.created_at > order_multiple.created_at else order_multiple
+                    order_type = "single" if order is order_single else "multiple"
                 else:
-                    order = multiple_order
-                    order_type = "multiple"
+                    order = order_single or order_multiple
+                    order_type = "single" if order is order_single else "multiple"
 
-            wallet = (
-                session.query(Wallet)
-                .filter(Wallet.user_id == g.user.id)
-                .with_for_update()
-                .first()
-            )
-
+            # ---------------- Lock Wallet ----------------
+            wallet = session.query(Wallet).filter_by(user_id=g.user.id).with_for_update().first()
             if not wallet:
                 return jsonify({"error": "Wallet not found"}), 404
-
             if wallet.balance < order.total:
-                return jsonify({
-                    "error": "Insufficient balance. Please fund your wallet."
-                }), 400
+                return jsonify({"error": "Insufficient balance"}), 400
 
-            # =====================================================
-            # ATOMIC PAYMENT + VENDOR PAYOUT (RACE WINDOW REMOVED)
-            # =====================================================
-            reference = str(uuid.uuid4())
+            # ---------------- Handle Payment ----------------
+            if order_type == "single":
+                reference = handle_single_order(session, order, wallet)
+            else:
+                reference = handle_multiple_order(session, order, wallet)
 
-            # 1️⃣ Debit wallet
-            Wallet.debit(session, g.user.id, order.total)
-
-            # 2️⃣ Mark order as paid
-            order.is_paid = True
-            order.paid_at = datetime.utcnow()
-
-            # 3️⃣ Create payment record
-            payment = Vendor_Payment(
-                id=str(uuid.uuid4()),
-                user_id=g.user.id,
-                vendor_id=getattr(order, "vendor_id", None),
-                order_id=order.id,
-                amount=order.total,
-                status="successful",
-                payment_gateway="wallet",
-                reference=reference,
-                created_at=datetime.utcnow(),
-            )
-            session.add(payment)
-
-            # 4️⃣ Pay vendor inside same transaction
-            process_vendor_payout(
-                user_id=g.user.id,
-                vendor_id=getattr(order, "vendor_id", None),
-                order_id=order.id,
-                amount=order.total,
-                provider="monnify"
-            )
-
-        # =====================================================
-        # DELIVERY URL (outside transaction)
-        # =====================================================
-        delivery_url = url_for(
-            "delivery_bp.start_delivery_process",
-            order_id=order.id,
-            _external=True
-        )
+        # ---------------- Delivery URL ----------------
+        delivery_url = url_for("delivery_bp.start_delivery_process", order_id=order.id, _external=True)
 
         return jsonify({
             "message": "Payment completed successfully via wallet",
@@ -166,9 +162,5 @@ def proceed_to_payment():
         }), 200
 
     except Exception as e:
-        return jsonify({
-            "error": "Wallet payment failed",
-            "details": str(e)
-        }), 500
-
+        return jsonify({"error": "Wallet payment failed", "details": str(e)}), 500
 
