@@ -23,3 +23,14 @@ def create_delivery(
 
 
 
+def redirect_to_delivery(delivery_id):
+    """
+    Returns the delivery bargain/location URL
+    """
+    return url_for(
+        "delivery_bp.manage_delivery_location",
+        delivery_id=delivery_id,
+        _external=True
+    )
+
+
