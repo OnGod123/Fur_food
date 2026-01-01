@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, g, redirect, url_for, jsonify
-from app.utils.jwt_tokens.generate_jwt import decode_jwt_token, get_user_state
+from app.utils.jwt_tokens.generate_jwt import decode_jwt_token, is_guest_user
 
 def check_if_guest(func):
     @wraps(func)
@@ -15,11 +15,14 @@ def check_if_guest(func):
             return jsonify({"error": "Invalid or expired token"}), 401
 
         g.user = decoded
-        user_id = decoded["user_id"]
 
-        if get_user_state(user_id):
+        if is_guest_user(decoded):
             return redirect(url_for("profile_bp.update_profile"))
 
         return func(*args, **kwargs)
+
     return wrapper
+
+
+
 

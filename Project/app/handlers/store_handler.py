@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify, current_app, g
 from sqlalchemy import or_
 from app.Database.food_item import FoodItem
 from app.Database.vendors_model import Vendor
-from app.utils.minio_utils import get_minio_file_url
+from app.utils.minio.minio_utils import get_minio_file_url
 from app.extensions import session_scope, r
 
-store_bp = Blueprint("store_bp", __name__)
+store_bp = Blueprint("store_bp", __name__, url_prefix="/items")
 PAGE_SIZE = 10
 
 # ------------------- Store listing -------------------

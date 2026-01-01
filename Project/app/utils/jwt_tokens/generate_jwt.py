@@ -6,64 +6,24 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import current_app
 
 
-def set_user_state(user_id, is_guest=False):
-    """
-    Stores the current state of the user in Redis.
-    """
-    r.hset(f"user:{user_id}", "is_guest", str(is_guest).lower())  # "true" or "false"
-
-def get_user_state(user_id):
-    """
-    Returns True if the user is currently a guest, False otherwise.
-    """
-    state = r.hget(f"user:{user_id}", "is_guest")
-    if state is None:
-        return False  
-    return state.lower() 
-
-def create_jwt_token(user_id, username, password_hash, auth_method):
-    """
-    Create a JWT token for a user.
-
-    Parameters
-    ----------
-    user_id : int
-    username : str
-    password_hash : str
-    auth_method : str
-        One of "signup", "guest", "google", "phone", etc.
-
-    Returns
-    -------
-    str
-        Encoded JWT token
-    """
-
-    # Determine if user is a guest
-    is_guest = True if auth_method.lower() == "guest" else False
-
+def create_jwt_token(user_id=None, username=None, password_hash=None, auth_method=""):
     payload = {
-        "user_id": user_id,
-        "username": username,
-        "password_hash": password_hash,
-        "is_guest": is_guest,
-        "auth_method": auth_method,
+        "user_id": user_id,          # None for guest
+        "username": username,        # None for guest
+        "auth_method": auth_method,  # "guest" or ""
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=10)
     }
-    set_user_state(user_id, is_guest=False)
-    token = jwt.encode(payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
-    return token
+
+    return jwt.encode(
+        payload,
+        current_app.config["JWT_SECRET_KEY"],
+        algorithm="HS256"
+    )
+
+def is_guest_user(decoded):
+    return decoded["auth_method"] == "guest"
 
 
-
-def decode_jwt_token(token):
-    try:
-        decoded = jwt.decode(token, current_app.config["JWT_SECRET"], algorithms=["HS256"])
-        return decoded
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
 
 def _get_serializer():
     """
@@ -102,5 +62,40 @@ def decode_order_id(token: str, max_age: int | None = None) -> int | str:
 
 
 
+def generate_rider_jwt(user_id: int, rider_id: int, username: str, expires_minutes: int = 60) -> str:
+    """
+    Generate a JWT for a Rider.
+    Payload includes user_id, rider_id, and username.
+    """
+    payload = {
+        "user_id": user_id,
+        "rider_id": rider_id,
+        "username": username,
+        "exp": datetime.utcnow() + timedelta(minutes=expires_minutes),
+        "iat": datetime.utcnow()
+    }
 
+    secret = current_app.config["JWT_SECRET_KEY"]
+    token = jwt.encode(payload, secret, algorithm="HS256")
+
+    return token
+
+
+
+def decode_rider_jwt(token: str) -> dict | None:
+    """
+    Decode a Rider JWT.
+    Returns payload if valid, otherwise None.
+    """
+    secret = current_app.config["JWT_SECRET_KEY"]
+
+    try:
+        payload = jwt.decode(token, secret, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        # Token expired
+        return None
+    except jwt.InvalidTokenError:
+        # Invalid token
+        return None
 

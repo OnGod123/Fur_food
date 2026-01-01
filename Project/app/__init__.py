@@ -34,6 +34,10 @@ def create_app(config_object=None):
     from app.handlers.multiple_order import multiple_order_bp
     from app.handlers.order_single import single_order_bp
     from app.handlers.notifications import notifications_bp
+    from app.handlers.search_vendors import search_for_vendor_bp
+    from app.handlers.store_handler import store_bp
+    from app.handlers.rider_signup import bp_rider_login
+    
 
 
     app.register_blueprint(home_bp)
@@ -47,11 +51,16 @@ def create_app(config_object=None):
     app.register_blueprint(monnify_bp)
     app.register_blueprint(flutterwave_bp)
     app.register_blueprint(wallet_bp)
-    app.register_blueprint(bp_vendor_register)
     app.register_blueprint(food_bp)
     app.register_blueprint(multiple_order_bp)
     app.register_blueprint(single_order_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(search_for_vendor_bp)
+    app.register_blueprint(store_bp)
+    app.register_blueprint(bp_rider_login)
+    app.register_blueprint(bp_vendor_register)
+
+
 
 
     @app.teardown_appcontext
