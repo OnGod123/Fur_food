@@ -23,9 +23,6 @@ from app.Database.user_models import User
 from app.extensions import emit_to_room
 
 
-
-
-
 class WhatsAppClient:
     def __init__(self, token: str, phone_number_id: str, api_version: str):
         if not token or not phone_number_id:
@@ -57,8 +54,6 @@ class WhatsAppClient:
             current_app.logger.exception("WhatsApp send failed: %s", resp.text)
             raise
         return resp.json()
-
-
 
 def verify_whatsapp_signature(raw_body: bytes, signature_header: str, app_secret: str) -> bool:
     if not signature_header or not app_secret:
@@ -224,7 +219,7 @@ class WhatsAppFlow:
                 return "", 200
 
             description = result["value"]
-            ws.emit(
+            emit_to_room(
                     "custom_order_request",
                 {"customer_phone": phone, "vendor_id": session_data["vendor_id"], "description": description},
                 room=f"vendor_{session_data['vendor_id']}",
@@ -311,7 +306,7 @@ class WhatsAppFlow:
             raise
 
             notify_vendor_new_order(order.id)
-            ws.emit("vendor_new_order_details", order.to_dict(), room=f"vendor_{session_data['vendor_id']}")
+            emit_to_room("vendor_new_order_details", order.to_dict(), room=f"vendor_{session_data['vendor_id']}")
             delivery = create_delivery(order)
             redirect_to_bargain(delivery.id)
 
