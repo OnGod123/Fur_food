@@ -22,6 +22,7 @@ class OrderSingle(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     vendor_name = Column(String(255), nullable=False)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
     product_name = Column(String(255), nullable=False)
     recipient_address = Column(String(255), nullable=False)
 

@@ -69,6 +69,9 @@ def single_order_handler():
             item_data=data,
             total=total,
             created_at=datetime.utcnow(),
+            vendor_name=getattr(item, "vendor_name", "Unknown"),
+            vendor_id = getattr(item, "vendor_name", "Unknown"),
+            product_name=getattr(item, "name", "Unknown"),
         )
 
         db.session.add(order)
@@ -81,6 +84,7 @@ def single_order_handler():
             user_id=g.user.id,
             vendor_id=item.vendor_id,
             order_id=str(order.id),
+            type="new_single_order",
             type="new_single_order",
             payload={
                 "vendor_id": item.vendor_id,
@@ -139,7 +143,9 @@ def single_order_handler():
             order_token = None
         else:
             order_token = encode_order_id(
-                {"order_id": order.id}
+            order_id=order.id,
+            vendor_id=item.vendor_id,
+            order_type="new_single_order"
             )
             redirect_url = url_for(
                 "payment.start_payment",

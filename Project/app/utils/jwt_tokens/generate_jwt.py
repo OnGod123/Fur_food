@@ -33,12 +33,17 @@ def _get_serializer():
     return URLSafeTimedSerializer(secret, salt="order-id")
 
 
-def encode_order_id(order_id: int | str) -> str:
+def encode_order_id(order_id: int | str, vendor_id: int, order_type: str) -> str:
     """
-    Encode (sign) an order ID so it cannot be tampered with.
+    Encode (sign) an order ID with vendor_id and order_type to prevent tampering.
     """
     serializer = _get_serializer()
-    return serializer.dumps({"order_id": order_id})
+    return serializer.dumps({
+        "order_id": order_id,
+        "vendor_id": vendor_id,
+        "order_type": order_type
+    })
+
 
 
 def decode_order_id(token: str, max_age: int | None = None) -> int | str:
@@ -47,12 +52,14 @@ def decode_order_id(token: str, max_age: int | None = None) -> int | str:
 
     :param token: encoded order id
     :param max_age: optional expiration time (seconds)
+    :return: the order_id contained in the token
+    :raises ValueError: if token is invalid or expired
     """
     serializer = _get_serializer()
 
     try:
         data = serializer.loads(token, max_age=max_age)
-        return data["order_id"]
+        return data
 
     except SignatureExpired:
         raise ValueError("Order ID token expired")

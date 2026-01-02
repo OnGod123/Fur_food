@@ -14,7 +14,7 @@ from app.orders.validator import validate_items
 from app.whatsapp.utils.orders import build_order
 from app.utils.pay_vendors_utils_utils import process_vendor_payout
 from app.whatsapp.utils.paymnet_link import build_payment_link
-from app.websocket.vendor_notify import notify_vendor_new_order
+from app.whatsapp.utils.notify_vendor import notify_vendor_new_order
 from app.whatsapp.utils.delivery import create_delivery, redirect_to_delivery
 from app.delivery.redirect import redirect_to_bargain
 from app.whatsapp.utils.ai.ai_step_guard.py import ai_guard_step

@@ -20,53 +20,127 @@ def notify_vendor_from_order():
     try:
         order_token = request.args.get("order_token")
         order_id = request.args.get("order_id")
-        event_type = request.args.get("event_type")
 
         # -------------------------------
-        # CASE 1: SECURE TOKEN FLOW
+        # RESOLVE ORDER FROM URL
         # -------------------------------
         if order_token:
             payload = decode_order_id(order_token)
 
             if payload["vendor_id"] != g.vendor.id:
-                return jsonify({"error": "Unauthorized order access"}), 403
+                return jsonify({"error": "no order notification yet"}), 403
 
             resolved_order_id = payload["order_id"]
-            order_type = payload["order_type"]
 
-        # -------------------------------
-        # CASE 2: LEGACY / INTERNAL FLOW
-        # -------------------------------
         elif order_id:
             resolved_order_id = order_id
-            order_type = event_type
 
         else:
             return jsonify({"error": "Missing order reference"}), 400
 
         # -------------------------------
-        # ORDER RESOLUTION
+        # ORDER FROM NOTIFICATION
         # -------------------------------
-        if order_type == "new_single_order":
-            order = OrderSingle.query.filter_by(
-                id=resolved_order_id,
-                vendor_id=g.vendor.id
-            ).first()
+        order_from_notification = OrderSingle.query.filter_by(
+            id=resolved_order_id,
+            vendor_id=g.vendor.id
+        ).first()
 
-        else:  # multi-vendor order
-            order = OrderMultiple.query.filter_by(
-                id=resolved_order_id
-            ).first()
+        if not order_from_notification:
+            return jsonify({"error": "Order not found"}), 404
+
+        # -------------------------------
+        # LATEST ORDER FOR VENDOR
+        # -------------------------------
+        latest_order = (
+            OrderSingle.query
+            .filter_by(vendor_id=g.vendor.id)
+            .order_by(OrderSingle.created_at.desc())
+            .first()
+        )
+
+        # -------------------------------
+        # RESPONSE
+        # -------------------------------
+        return jsonify({
+            "order_from_notification": order_from_notification.to_dict(),
+            "latest_order": (
+                latest_order.to_dict()
+                if latest_order else None
+            ),
+            "order_type": "new_single_order"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+from flask import Blueprint, jsonify, g
+from app.Database.notification import Notification
+from app.Database.order_multiple import OrderMultiple
+from app.utils.jwt_tokens.authentication import vendor_required
+
+notifications_bp = Blueprint("notifications_bp", __name__)
+
+@notifications_bp.route("/notifications/redirect", methods=["GET"])
+@vendor_required
+def notify_vendor_from_order():
+    """
+    MULTI-VENDOR notification resolver.
+
+    Flow:
+    1. Fetch latest notification for vendor
+    2. Use notification.order_id
+    3. Load OrderMultiple
+    4. Filter items to this vendor
+    """
+
+    try:
+        # ---------------------------------
+        # 1. Latest notification for vendor
+        # ---------------------------------
+        notification = (
+            Notification.query
+            .filter_by(
+                vendor_id=g.vendor.id,
+                type="new_multi_order"
+            )
+            .order_by(Notification.created_at.desc())
+            .first()
+        )
+
+        if not notification:
+            return jsonify({"error": "No notifications found"}), 404
+
+        # ---------------------------------
+        # 2. Resolve order from notification
+        # ---------------------------------
+        order = OrderMultiple.query.filter_by(
+            id=notification.order_id,
+            user_id=notification.user_id
+        ).first()
 
         if not order:
             return jsonify({"error": "Order not found"}), 404
 
-        # -------------------------------
-        # RESPONSE (frontend can redirect)
-        # -------------------------------
+        # ---------------------------------
+        # 3. Filter items for this vendor
+        # ---------------------------------
+        vendor_items = [
+            item for item in order.items_data
+            if item.get("vendor_id") == g.vendor.id
+        ]
+
+        # ---------------------------------
+        # 4. Response
+        # ---------------------------------
         return jsonify({
-            "order": order.to_dict(),
-            "order_type": order_type
+            "notification_id": notification.id,
+            "order_id": order.id,
+            "buyer_id": order.user_id,
+            "items": vendor_items,
+            "order_type": "new_multi_order",
+            "created_at": order.created_at.isoformat()
         }), 200
 
     except Exception as e:
