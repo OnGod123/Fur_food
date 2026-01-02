@@ -37,7 +37,7 @@ def create_app(config_object=None):
     from app.handlers.search_vendors import search_for_vendor_bp
     from app.handlers.store_handler import store_bp
     from app.handlers.rider_signup import bp_rider_login
-    
+    from app.handlers.whatsapp_handler import whatsapp_bp
 
 
     app.register_blueprint(home_bp)
@@ -59,6 +59,7 @@ def create_app(config_object=None):
     app.register_blueprint(store_bp)
     app.register_blueprint(bp_rider_login)
     app.register_blueprint(bp_vendor_register)
+    app.register_blueprint(whatsapp_bp)
 
 
 

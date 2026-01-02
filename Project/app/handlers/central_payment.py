@@ -3,6 +3,7 @@ from app.utils.jwt_tokens.guest_token import check_if_guest
 
 wallet_bp = Blueprint("wallet_bp", __name__)
 
+@wallet_bp.route("/wallet/callback", defaults={"provider_name": None}, methods=["GET"])
 @wallet_bp.route("/wallet/callback/<provider_name>", methods=["GET"])
 @check_if_guest
 def wallet_callback(provider_name):
