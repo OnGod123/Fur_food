@@ -147,16 +147,14 @@ def multiple_order_handler():
 
         if is_vendor:
             redirect_url = url_for(
-                "notifications_bp.notify_vendor_from_order",
-                order_id=order.id,
+                "notifications_bp.notify_multiple_order",
                 event_type="new_multi_order",
                 _external=True,
             )
             order_token = None
         else:
-            order_token = encode_order_id(
-                {"order_id": order.id}
-            )
+            order_token = encode_order_id(order.id, vendor.id, "new_multi_order",)
+            
             redirect_url = url_for(
                 "wallet_payment_bp.start_payment",
                 order_id=order.id,

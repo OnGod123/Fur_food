@@ -84,7 +84,7 @@ notifications_bp = Blueprint("notifications_bp", __name__)
 
 @notifications_bp.route("/notifications/redirect", methods=["GET"])
 @vendor_required
-def notify_vendor_from_order():
+def notify_multiple_order():
     """
     MULTI-VENDOR notification resolver.
 
