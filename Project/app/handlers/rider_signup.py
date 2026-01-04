@@ -7,72 +7,103 @@ from app.Database.RiderAndStrawler import RiderAndStrawler
 from app.Database.user_models import User
 from app.utils.jwt_tokens.generate_jwt import generate_rider_jwt
 from app.utils.emails.send_email import send_welcome_email
-
+from app.utils.bank.verify_bank_account import resolve_bank_account
 
 bp_rider_login = Blueprint("Blueprint_rider_bp", __name__, url_prefix="/rider")
 
 
+def normalize(name: str) -> str:
+    return name.lower().strip()
+
+def names_match(bank_name, first, middle, last) -> bool:
+    bank_parts = normalize(bank_name).split()
+    input_parts = [
+        normalize(first),
+        normalize(last)
+    ]
+    if middle:
+        input_parts.append(normalize(middle))
+
+    matches = sum(1 for p in input_parts if p in bank_parts)
+    return matches >= 2   # require at least 2 matches
+
+
 @bp_rider_login.route("/login", methods=["POST"])
 def login_rider():
-    """
-    Login a rider using email, username, and password.
-    On first login, hash and store the password.
-    Sends welcome email, generates JWT, and redirects rider to delivery page.
-    """
     data = request.get_json() or {}
 
     email = data.get("email", "").lower().strip()
     username = data.get("username", "").strip()
     password = data.get("password")
 
-    if not all([email, username, password]):
-        return jsonify({"error": "email, username, and password are required"}), 400
+    bank_code = data.get("bank_code")
+    account_number = data.get("account_number")
+
+    first_name = data.get("first_name", "").strip()
+    middle_name = data.get("middle_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    phone = data.get("phone", "").strip()
+
+    if not all([email, username, password, bank_code, account_number, first_name, last_name, phone]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # 🔐 Verify bank account
+    bank_data = resolve_bank_account(account_number, bank_code)
+    if not bank_data:
+        return jsonify({"error": "Bank verification failed"}), 400
+
+    if not names_match(
+        bank_data["account_name"],
+        first_name,
+        middle_name,
+        last_name
+    ):
+        return jsonify({
+            "error": "Name mismatch with bank account",
+            "bank_name": bank_data["account_name"]
+        }), 400
 
     with session_scope() as session:
-        # 1️⃣ Authenticate user
+        # Authenticate user
         user = session.query(User).filter_by(email=email, username=username).first()
         if not user:
             return jsonify({"error": "Invalid login credentials"}), 401
 
-        # 2️⃣ Check Rider profile
         rider = session.query(RiderAndStrawler).filter_by(user_id=user.id).first()
         if not rider:
             return jsonify({"error": "User is not registered as a rider"}), 403
 
-        # 3️⃣ Hash password if not set yet
-        if not getattr(rider, "password_hash", None):
+        # Password handling
+        if not rider.password_hash:
             rider.password_hash = generate_password_hash(password)
-        else:
-            # Verify password
-            if not check_password_hash(rider.password_hash, password):
-                return jsonify({"error": "Invalid rider credentials"}), 401
+        elif not check_password_hash(rider.password_hash, password):
+            return jsonify({"error": "Invalid rider credentials"}), 401
 
-        # 4️⃣ Update rider status
+        # ✅ Verified & activated
         rider.status = "active"
         rider.is_available = True
+        rider.is_verified = True
+        rider.phone = phone
+        rider.bank_code = bank_code
+        rider.account_number = account_number
+        rider.account_name = bank_data["account_name"]
         rider.last_update = datetime.utcnow()
+
         session.flush()
 
-        # 5️⃣ Cache rider session in Redis
         r.set(f"rider:{user.email}:id", rider.id)
 
-        # 6️⃣ Generate JWT (safe payload)
         rider_jwt = generate_rider_jwt(
             user_id=user.id,
             rider_id=rider.id,
             username=user.username
         )
 
-        user_email = user.email
-        user_username = user.username
-
-    # 7️⃣ Send welcome email
-    send_welcome_email(user_email, user_username)
+    send_welcome_email(user.email, user.username)
 
     return jsonify({
-        "message": "Rider login successful",
+        "message": "Rider verified and login successful",
         "redirect_url": "/rider/delivery",
-        "rider": rider.to_dict(),
         "rider_jwt": rider_jwt
     }), 200
 

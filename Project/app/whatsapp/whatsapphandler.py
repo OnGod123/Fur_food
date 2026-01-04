@@ -1,13 +1,10 @@
 import uuid
 import hmac
 import hashlib
-
-
 from functools import wraps
 from flask import Blueprint, jsonify, current_app
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
 from app.whatsapp.utils.session import load_session, save_session, clear_session
 from app.whatsapp.utils import format_summary
 from app.orders.validator import validate_items
@@ -21,7 +18,7 @@ from app.whatsapp.utils.ai.ai_step_guard.py import ai_guard_step
 from app.Database.vendors_model import Vendor
 from app.Database.user_models import User
 from app.extensions import emit_to_room
-
+from app.whatsapp.utils.track_utils import resolve_vendor, resolve_buyer
 
 class WhatsAppClient:
     def __init__(self, token: str, phone_number_id: str, api_version: str):
@@ -150,7 +147,7 @@ class WhatsAppFlow:
                 return "", 200
 
             tracking_id = result["value"]
-            buyer_username = session_data.get("username")
+            buyer_username = session_data.get("username") or resolve_buyer(Phone)
             vendor_username = resolve_vendor_username(tracking_id)
             self.send(redirect_to_bargain(buyer_username, vendor_username))
             session_data["state"] = "MENU"
@@ -192,16 +189,14 @@ class WhatsAppFlow:
             self.save()
 
             if menu_lines:
-                self.send(Phone,
-                    "➡️ *What would you like to buy?*\n\n"
+                self.send("➡️ *What would you like to buy?*\n\n"
                     + "\n".join(menu_lines)
                     + "\n\nReply with:\n"
                     "• Item number (e.g. `1`)\n"
                     "• OR describe what you want if not listed"
                 )
             else:
-                self.send(Phone,
-                "➡️ Vendor has no menu. Please describe what you want to buy.\n"
+                self.send("➡️ Vendor has no menu. Please describe what you want to buy.\n"
                 "📝 *Example:* `Fufu – 2 wraps with egusi soup`"
                 )
             return "", 200
