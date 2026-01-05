@@ -36,6 +36,7 @@ class RiderAndStrawler(Base):
     status = Column(String(20), default="inactive")   # inactive | active | suspended
     is_available = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
+    Destination_travel = Column(String(255), nullable=True)
 
     # ⏱️ Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)

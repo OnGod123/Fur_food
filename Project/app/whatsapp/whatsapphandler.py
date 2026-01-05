@@ -69,6 +69,7 @@ class WhatsAppFlow:
         self.text = text
         self.whatsapp = sender
         self.session = load_session(phone)
+        self.save = save_session(self.phone, self.session)
         self.state = self.session.get("state", "MENU")
 
     def send(self, msg):
