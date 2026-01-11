@@ -115,6 +115,13 @@ result = ai_guard_step(
 )
 
 result = ai_guard_step(
+    step="ASK_QUANTITY",
+    user_input=text,
+    expected="Enter a valid quantity (positive number)",
+    examples=["1", "2", "3", "5", "10"],
+)
+
+result = ai_guard_step(
     step="ASK_ERRAND",
     user_input=text,
     expected=(
