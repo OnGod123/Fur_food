@@ -58,7 +58,7 @@ def vendor_required(fn):
         with session_scope() as session:
             vendor = session.get(Vendor, payload["vendor_id"])
             if not vendor:
-                return jsonify({"error": "Vendor not found"}), 404
+                return redirect(url_for('auth.vendor'))
 
             # Attach vendor to global context
             g.vendor = vendor

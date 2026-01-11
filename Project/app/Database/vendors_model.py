@@ -12,35 +12,58 @@ from app.Database.food_item import FoodItem
 
 class Vendor(Base):
     """
-    Represents a food vendor or merchant store.
+    Represents a food vendor / merchant store.
     """
 
     __tablename__ = "vendors"
-
     id = Column(Integer, primary_key=True, autoincrement=True)
-    Business_name = Column(String(255), nullable=False, index=True)
-    Business_address = Column(String(255), nullable=False)
-    Bussiness_email = Column(String(255), nullable= False)
-    Bussiness_Phone = Column(Integer, nullable = False)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    user = relationship("User", back_populates="vendor", uselist=False)
+
+    business_name = Column(String(255), nullable=False, index=True)
+    business_address = Column(String(255), nullable=False)
+    business_email = Column(String(255), nullable=False, index=True)
+    business_phone = Column(String(20), nullable=False, index=True)
 
     is_open = Column(Boolean, default=True)
     opening_time = Column(Time, nullable=True)
     closing_time = Column(Time, nullable=True)
 
-    Bussiness_account = Column(Integer, nullable=False)
-    bank_code = Column(String(16), nullable=False)
+    bank_name = Column(String(100), nullable=False)
+    bank_code = Column(String(10), nullable=False)
+    account_name = Column(String(150), nullable=False)
     account_number = Column(String(20), nullable=False)
-    password_hash = Column(String, nullable=True)
+
+    paystack_customer_code = Column(String(50), nullable=True)
+    paystack_virtual_account = Column(String(20), nullable=True)
+
+    is_verified = Column(Boolean, default=False)
+
+    menu_items = relationship(
+        "FoodItem",
+        back_populates="vendor",
+        cascade="all, delete-orphan"
+    )
+
+    merchants = relationship(
+        "ProfileMerchant",
+        back_populates="vendor",
+        cascade="all, delete-orphan"
+    )
+
 
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
 
+    __table_args__ = (
+        Index("idx_vendor_bank", "bank_code", "account_number"),
+    )
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    user = relationship("User", back_populates="vendors", uselist=False)
-
-    menu_items = relationship("FoodItem", back_populates="vendor", cascade="all, delete-orphan")
-    merchants = relationship("Profile_Merchant", back_populates="vendor", cascade="all, delete-orphan")
 
     def to_dict(self, include_menu=False):
         data = {

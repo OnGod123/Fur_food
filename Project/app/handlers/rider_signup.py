@@ -11,6 +11,28 @@ from app.utils.bank.verify_bank_account import resolve_bank_account
 
 bp_rider_login = Blueprint("Blueprint_rider_bp", __name__, url_prefix="/rider")
 
+def create_paystack_customer(rider):
+    payload = {
+        "email": rider.user.email,
+        "first_name": rider.account_name.split()[0],
+        "last_name": rider.account_name.split()[-1],
+        "phone": rider.phone
+    }
+
+    res = requests.post(
+        "https://api.paystack.co/customer",
+        json=payload,
+        headers={
+            "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+    )
+
+    data = res.json()
+
+    if data["status"]:
+        rider.paystack_customer_code = data["data"]["customer_code"]
+
 
 def normalize(name: str) -> str:
     return name.lower().strip()
@@ -88,6 +110,7 @@ def login_rider():
         rider.account_number = account_number
         rider.account_name = bank_data["account_name"]
         rider.last_update = datetime.utcnow()
+        create_paystack_customer(rider)
 
         session.flush()
 

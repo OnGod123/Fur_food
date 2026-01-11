@@ -38,6 +38,7 @@ class Delivery(Base):
     address = Column(String(255), nullable=False)
     delivery_fee = Column(Float, nullable=True)
     status = Column(String(50), default="pending")
+    rider_id = Column(Integer, ForeignKey("RiderAndStrawler.id")
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", backref="deliveries")
     order_single = relationship("OrderSingle", backref="delivery", uselist=False)

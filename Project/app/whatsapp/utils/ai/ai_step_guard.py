@@ -56,7 +56,11 @@ Rules:
         temperature=0,
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
+            {"role": "system", "content": step},
+            {"role": "system", "content": expected},
+            {"role": "system", "content":examples}
+            {"role": "user", "content": user_input}
+            
         ],
     )
 
@@ -158,4 +162,33 @@ result = ai_guard_step(
     ],
 )
 
+result = ai_guard_step(
+    step="SET_LOCATION",
+    user_input=text,
+    expected="Set or update your current location",
+    examples=[
+        "SET LOCATION: Ikeja Along Allen Avenue, Lagos",
+        "UPDATE LOCATION: Shoprite Lekki Phase 1"
+    ],
+)
 
+result = ai_guard_step(
+    step="LOCATABLE_ADDRESS",
+    user_input=text,
+    expected="A real, locatable place or address",
+    examples=[
+        "No 10 Allen Avenue, Ikeja, Lagos",
+        "Shoprite Lekki Phase 1",
+        "Unilag Main Gate, Akoka",
+        "Ojota Bus Stop, Lagos"
+    ],
+)
+result = ai_guard_step(
+        step="ASK_ERRAND",
+        user_input=text,
+        expected="Describe the errand clearly, include pickup and destination",
+        examples=[
+            "Pick up documents from Ikeja and deliver to Lekki",
+            "Buy groceries from Shoprite Yaba and deliver to my home",
+        ],
+    )

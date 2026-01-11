@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from contextlib import contextmanager
 from authlib.integrations.flask_client import OAuth
 from flask_socketio import SocketIO
+from flask_socketio import Namespace
 
 """create uninitialized extension objects to avoid circular imports"""
 Base = declarative_base()
@@ -66,6 +67,7 @@ def session_scope():
     finally:
         session.close()
 
+geolocator = Nominatim(user_agent="rideshare_app")
 
 def init_minio(app: Flask):
     """Initialize the minio_client using app config. Returns the client."""

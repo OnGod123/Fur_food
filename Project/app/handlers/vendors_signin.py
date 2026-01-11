@@ -7,6 +7,30 @@ from app.utils.jwt_tokens.verify_user import verify_jwt_token
 
 bp_vendor_register = Blueprint("Blueprint_vendor_bp", __name__, url_prefix="/vendor")
 
+def create_paystack_customer_for_vendor(vendor):
+    payload = {
+        "email": vendor.business_email,
+        "first_name": vendor.business_name.split()[0],
+        "last_name": vendor.business_name.split()[-1],
+        "phone": vendor.business_phone
+    }
+
+    res = requests.post(
+        "https://api.paystack.co/customer",
+        json=payload,
+        headers={
+            "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+    )
+
+    data = res.json()
+
+    if not data.get("status"):
+        raise Exception(data.get("message", "Paystack error"))
+
+    vendor.paystack_customer_code = data["data"]["customer_code"]
+
 
 @verify_jwt_token
 @bp_vendor_register.route("/signup", methods=["POST"])
@@ -51,6 +75,8 @@ def signup_vendor():
             user_id=user.id
         )
 
+
+        create_paystack_customer_for_vendor(vendor)
         session.add(new_vendor)
         session.flush()  
 

@@ -39,6 +39,13 @@ def create_app(config_object=None):
     from app.handlers.rider_signup import bp_rider_login
     from app.handlers.whatsapp_handler import whatsapp_bp
     from app.handlers.delivery import delivery_bp
+    from app.handlers.socket.gblobal import GlobalNamespace
+    from app.handlers.socket.private_websocket import PrivateNamespace
+    from app.handlers.errand import send_erand_bp
+    from app.handlers.order_rider import order_ride_bp
+    from app.handlers.accept_errand import accept_errand_bp
+    from app.handlers.accept_ride import order_ride_bp 
+
 
 
     app.register_blueprint(home_bp)
@@ -62,7 +69,11 @@ def create_app(config_object=None):
     app.register_blueprint(bp_vendor_register)
     app.register_blueprint(whatsapp_bp)
     app.register_blueprint(delivery_bp)
-    
+    app.register_blueprint(send_erand_bp)
+    app.register_blueprint(order_ride_bp)
+    app.register_blueprint(accept_errand_bp)
+    socketio.on_namespace(GlobalNamespace("/global"))
+    socketio.on_namespace(PrivateNamespace("/private"))
 
 
 
