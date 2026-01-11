@@ -276,12 +276,21 @@ class WhatsAppFlow:
                 self.save()
                 return "", 200
 
+            # Validate price is numeric before calculating total
+            try:
+                price = float(item["price"])
+            except (TypeError, ValueError):
+                self.send("❌ Invalid item price. Returning to menu.")
+                session_data["state"] = "MENU"
+                self.save()
+                return "", 200
+
             session_data.update({
                 "state": "ASK_ADDRESS",
-                "items": [{"id": item["id"], "name": item["name"], "price": item["price"], "qty": qty}],
+                "items": [{"id": item["id"], "name": item["name"], "price": price, "qty": qty}],
                 })
             self.save()
-            total = item["price"] * qty
+            total = price * qty
             self.send(f"✅ {qty}x {item['name']} = ₦{total}\n\n➡️ Send your delivery address")
             return "", 200
 
