@@ -231,11 +231,11 @@ class WhatsAppFlow:
             if text.isdigit() and text in menu:
                 item = menu[text]
                 session_data.update({
-                    "state": "ASK_ADDRESS",
-                    "items": [{"id": item["id"], "name": item["name"], "price": item["price"], "qty": 1}],
+                    "state": "ASK_QUANTITY",
+                    "selected_item": {"id": item["id"], "name": item["name"], "price": item["price"]},
                     })
                 self.save()
-                self.send("➡️ Send delivery address")
+                self.send(f"🛒 You selected: *{item['name']}* — ₦{item['price']}\n\n➡️ How many do you want? (Enter quantity, e.g. 1, 2, 3)")
                 return "", 200
 
         # Custom request to vendor
@@ -247,6 +247,52 @@ class WhatsAppFlow:
                 session_data["state"] = "MENU"
                 self.save()
                 return "", 200
+
+    # ---------- ASK_QUANTITY ----------
+            if state == "ASK_QUANTITY":
+                result = ai_guard_step(
+                step="ASK_QUANTITY",
+                user_input=text,
+                expected="Enter the quantity (a positive number)",
+                examples=["1", "2", "3", "5"],
+            )
+            if not result["ok"]:
+                self.send(result["hint"])
+                return "", 200
+
+            try:
+                qty = int(result["value"])
+                if qty < 1:
+                    self.send("❌ Quantity must be at least 1. Please enter a valid quantity.")
+                    return "", 200
+            except ValueError:
+                self.send("❌ Invalid quantity. Please enter a number (e.g. 1, 2, 3).")
+                return "", 200
+
+            item = session_data.get("selected_item")
+            if not item:
+                self.send("❌ Item not found. Returning to menu.")
+                session_data["state"] = "MENU"
+                self.save()
+                return "", 200
+
+            # Validate price is numeric before calculating total
+            try:
+                price = float(item["price"])
+            except (TypeError, ValueError):
+                self.send("❌ Invalid item price. Returning to menu.")
+                session_data["state"] = "MENU"
+                self.save()
+                return "", 200
+
+            session_data.update({
+                "state": "ASK_ADDRESS",
+                "items": [{"id": item["id"], "name": item["name"], "price": price, "qty": qty}],
+                })
+            self.save()
+            total = price * qty
+            self.send(f"✅ {qty}x {item['name']} = ₦{total}\n\n➡️ Send your delivery address")
+            return "", 200
 
     # ---------- ASK_ADDRESS ----------
             if state == "ASK_ADDRESS":
