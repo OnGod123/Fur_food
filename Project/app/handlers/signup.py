@@ -5,13 +5,88 @@ from werkzeug.security import generate_password_hash
 import re
 from app.utils.jwt_tokens.generate_jwt import create_jwt_token
 
-
 signup_bp = Blueprint("auth_signup", __name__, url_prefix="/create_account")
 
-
-@signup_bp.route("/signup", methods=["GET"])
+@signup_bp.route("signup", methods=["GET"])
 def signup_get() -> str:
     return render_template("signup.html")
+
+@signup_bp.route("signin", methods=["POST"])
+def login_post():
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+        email_or_phone = (data.get("email") or data.get("phone") or "").strip()
+        password = data.get("password")
+
+        # ----------------- VALIDATION -----------------
+        if not email_or_phone or not password:
+            return jsonify({"error": "Missing required fields (email/phone and password)"}), 400
+
+        # Allow login with either email or phone
+        is_email = "@" in email_or_phone
+        if is_email:
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", email_or_phone):
+                return jsonify({"error": "Invalid email format"}), 400
+        else:
+            # Very basic phone validation — adjust to your needs (e.g. Nigerian format)
+            if not re.match(r"^\+?\d{8,15}$", email_or_phone):
+                return jsonify({"error": "Invalid phone number format"}), 400
+
+        # ----------------- DATABASE CHECK -----------------
+        with session_scope() as session:
+            # Try to find user by email or phone
+            query_filter = (User.email == email_or_phone) if is_email else (User.phone == email_or_phone)
+            user = session.query(User).filter(query_filter).first()
+
+            if not user:
+                return jsonify({
+                    "error": "No account found with this email/phone",
+                    "message": "Please sign up first",
+                    "signup_url": url_for("auth_signup.signup_get")
+                }), 404
+
+            # Verify password
+            if not check_password_hash(user.password_hash, password):
+                return jsonify({"error": "Incorrect password"}), 401
+
+            # Optional: update last login IP
+            user.last_ip = request.remote_addr
+            session.commit()  # or session.flush() if you prefer
+
+            # ----------------- JWT TOKEN -----------------
+            token = create_jwt_token(
+                user_id=user.id,
+                username=user.name,
+                password=new_user.password
+            )
+
+            # ----------------- RESPONSE -----------------
+            dashboard_url = url_for("user.dashboard", user_id=user.id)
+
+            response = jsonify({
+                "message": "Login successful",
+                "user": user.to_dict() if hasattr(user, 'to_dict') else {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "phone": user.phone,
+                },
+                "token": token,
+                "redirect": dashboard_url
+            })
+            response.status_code = 200
+
+            if request.args.get("redirect") == "true":
+                return redirect(dashboard_url)
+
+            return response
+
+    except Exception as e:
+        current_app.logger.exception("Login error")
+        return jsonify({"error": "Server error"}), 500
 
 
 @signup_bp.route("/signup", methods=["POST"])
@@ -70,17 +145,16 @@ def signup_post():
             )
 
             session.add(new_user)
-            session.flush()  # ensures new_user.id is available
+            session.flush()  
 
-            # ----------------- JWT TOKEN -----------------
-            # EXACTLY YOUR REQUIRED FORMAT
+    
             token = create_jwt_token(
                 user_id=new_user.id,
                 username=new_user.name,
-                password=new_user.password  # If this field doesn't exist, use new_user.password_hash
+                password=new_user.password  
             )
 
-            # ----------------- RESPONSE -----------------
+            
             dashboard_url = url_for("user.dashboard", user_id=new_user.id)
 
             response = jsonify({
@@ -99,4 +173,3 @@ def signup_post():
     except Exception as e:
         current_app.logger.exception("Signup error")
         return jsonify({"error": "Server error"}), 500
-

@@ -1,7 +1,6 @@
 
 import os
 
-
 class BaseConfig:
     # --------------------
     # CORE
@@ -37,7 +36,6 @@ class BaseConfig:
         "https://sandbox.monnify.com"
     )
     
-
     PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY")
     PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
     PAYSTACK_WEBHOOK_SECRET = os.getenv("PAYSTACK_WEBHOOK_SECRET")

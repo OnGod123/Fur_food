@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from app.Database.notification import Notification
+from app.Database.notifications import Notification
 from app.extensions import Base, session_scope
 
 

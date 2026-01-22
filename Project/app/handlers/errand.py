@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, render_template, request, redirect, current_app, jsonify
 from app.extensions import socketio, session_scope, redis_client
-from app.database.user_models import User, RiderAndStrawler
-from app.merchants.Database.errand import Errand
+from app.Database.user_models import User
+from app.Database.RiderAndStrawler import RiderAndStrawler
+from app.Database.errand import Errand
 from geopy.geocoders import Nominatim
 from datetime import datetime
 from app.utils.jwt_tokens.verify_user import verify_jwt_token
@@ -9,10 +10,8 @@ from app.extensions import geolocator
 import json
 
 TWELVE_FIELDS_M = 1320
-GLOBAL_ROOM = "all_participants"
 
-send_errand_bp = Blueprint("delivery_bp", __name__)
-
+send_errand_bp = Blueprint("send-errand", __name__)
 
 @send_errand_bp.route("/user/send_errand", methods=["POST"])
 @verify_jwt_token
@@ -100,7 +99,8 @@ def send_errand(user):
     socketio.emit(
         "new_errand_request",
         user_send_errand,
-        room=GLOBAL_ROOM, "/global"
+        room=GLOBAL_ROOM, 
+         namespace="/global"
     )
 
     

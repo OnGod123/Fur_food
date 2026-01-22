@@ -85,7 +85,6 @@ def single_order_handler():
             vendor_id=item.vendor_id,
             order_id=str(order.id),
             type="new_single_order",
-            type="new_single_order",
             payload={
                 "vendor_id": item.vendor_id,
                 "buyer_id": g.user.id,

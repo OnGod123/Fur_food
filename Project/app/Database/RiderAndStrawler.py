@@ -10,8 +10,6 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
-Base = declarative_base()
-
 class RiderAndStrawler(Base):
     __tablename__ = "riders_and_strawlers"
 

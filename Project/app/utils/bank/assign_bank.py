@@ -35,3 +35,26 @@ def create_dedicated_account(entity, preferred_bank="wema-bank"):
 
     return data["data"]
 
+
+
+def create_paystack_customer_code(vendor):
+    payload = {
+        "email": vendor.business_email,
+        "first_name": vendor.business_name.split()[0],
+        "last_name": vendor.business_name.split()[-1],
+        "phone": vendor.business_phone
+    }
+
+    res = requests.post(
+        "https://api.paystack.co/customer",
+        json=payload,
+        headers={
+            "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+    )
+
+    data = res.json()
+
+    if not data.get("status"):
+        raise Exception(data.get("message", "Paystack error"))

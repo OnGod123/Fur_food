@@ -106,3 +106,14 @@ def decode_rider_jwt(token: str) -> dict | None:
         # Invalid token
         return None
 
+
+def decode_jwt_token(token):
+    try:
+        decoded = jwt.decode(token, current_app.config["JWT_SECRET"], algorithms=["HS256"])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+

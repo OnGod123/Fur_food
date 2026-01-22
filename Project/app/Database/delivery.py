@@ -38,12 +38,12 @@ class Delivery(Base):
     address = Column(String(255), nullable=False)
     delivery_fee = Column(Float, nullable=True)
     status = Column(String(50), default="pending")
-    rider_id = Column(Integer, ForeignKey("RiderAndStrawler.id")
+    rider_id = Column(Integer, ForeignKey("riders_and_strawlers.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", backref="deliveries")
     order_single = relationship("OrderSingle", backref="delivery", uselist=False)
     order_multiple = relationship("OrderMultiple", backref="delivery", uselist=False)
-    delivery_address = Column(string(50), nullable = False)
+    delivery_address = Column(String(50), nullable = False)
 
     def to_dict(self):
         return {

@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from app.extensions import socketio, session_scope, r  # r = Redis client
-from app.database.user_models import User
-from app.database.rider_models import Rider
-from app.merchants.Database.rideshare import RideShare
+from app.Database.user_models import User
+from app.Database.RiderAndStrawler import RiderAndStrawler
+from app.Database.order_ride import  Ride_Order
 from app.utils.jwt_tokens.verify_user import verify_jwt_token
 from app.utils.jwt_tokens.verify_rider import verify_rider_jwt
 from datetime import datetime
@@ -45,7 +45,7 @@ def accept_ride(rider):
 
     # Update RideShare DB status
     with session_scope() as session:
-        ride = session.get(RideShare, ride_id)
+        ride = session.get(Ride_Order, ride_id)
         if not ride:
             return jsonify({"error": "Ride not found"}), 404
 

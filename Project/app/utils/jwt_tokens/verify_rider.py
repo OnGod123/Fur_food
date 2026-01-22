@@ -6,7 +6,7 @@ from app.extensions import session_scope
 from app.Database.RiderAndStrawler import  RiderAndStrawler as Rider
 
 
-def rider_required(fn):
+def verify_rider_jwt(fn):
     """
     Decorator to protect endpoints for authenticated Riders.
     Decodes the Rider JWT and attaches the payload to g.rider.

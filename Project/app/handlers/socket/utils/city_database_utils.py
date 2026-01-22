@@ -1,15 +1,14 @@
 import math
 import requests
+from app.extensions import  geolocator
 
 ONE_HOUR = 3600
 EARTH_RADIUS_M = 6371000  # meters
 FOOTBALL_FIELD_M = 100
 TWELVE_FIELDS_M = 12 * FOOTBALL_FIELD_M  # 1200m
 ONE_HOUR = 3600
-from extensions import r as redis
-
+from app.extensions import r as redis
 import time
-from extensions import r as redis
 
 def set_home_location(phone, lat, lng):
     redis.hset(
@@ -20,7 +19,6 @@ def set_home_location(phone, lat, lng):
             "ts": int(time.time())
         }
     )
-
 def get_home_location(phone):
     data = redis.hgetall(f"user:home:{phone}")
     if not data:
@@ -31,8 +29,6 @@ def get_home_location(phone):
         "lng": float(data[b"lng"]),
         "ts": int(data[b"ts"]),
     }
-
-
 
 def add_to_city_bucket(role, city, client_id, lat, lng):
     if role == "rider":
@@ -46,7 +42,6 @@ def add_to_city_bucket(role, city, client_id, lat, lng):
 
     redis.sadd(key, member)
     redis.expire(key, ONE_HOUR)
-
 
 def get_city_bucket(role, city):
     key = f"ride:city:{role}s:{city}"
@@ -62,7 +57,6 @@ def get_city_bucket(role, city):
             m.decode().split("|") for m in members
         )
     ]
-
 def distance_m(lat1, lng1, lat2, lng2):
     lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
 
@@ -76,7 +70,14 @@ def distance_m(lat1, lng1, lat2, lng2):
     return EARTH_RADIUS_M * c
 
 
-def find_nearby_vendors(city, rider_lat, rider_lng, radius_m=TWELVE_FIELDS_M):
+def find_nearby_vendors(rider_lat, rider_lng, city=None, radius_m=TWELVE_FIELDS_M):
+    if not city:
+        location = geolocator.reverse((rider_lat, rider_lng), exactly_one=True)
+        if location and "city" in location.raw["address"]:
+            city = location.raw["address"]["city"]
+        else:
+            return []  
+
     vendors = get_city_bucket("vendor", city)
 
     nearby = []
@@ -90,23 +91,29 @@ def find_nearby_vendors(city, rider_lat, rider_lng, radius_m=TWELVE_FIELDS_M):
                 "lng": v["lng"]
             })
 
-    # Optional: nearest first
     nearby.sort(key=lambda x: x["distance_m"])
     return nearby
 
 
-def find_nearby_riders(city, vendor_lat, vendor_lng, radius_m=TWELVE_FIELDS_M):
-    riders = get_city_bucket("rider", city)
+def find_nearby_rider(rider_lat, rider_lng, city=None, radius_m=TWELVE_FIELDS_M):
+    if not city:
+        location = geolocator.reverse((rider_lat, rider_lng), exactly_one=True)
+        if location and "city" in location.raw["address"]:
+            city = location.raw["address"]["city"]
+        else:
+            return [] 
+
+    rider = get_city_bucket("rider", city)
 
     nearby = []
-    for r in riders:
-        d = distance_m(vendor_lat, vendor_lng, r["lat"], r["lng"])
+    for v in vendors:
+        d = distance_m(rider_lat, rider_lng, v["lat"], v["lng"])
         if d <= radius_m:
             nearby.append({
-                "rider_id": r["id"],
+                "vendor_id": v["id"],
                 "distance_m": round(d, 2),
-                "lat": r["lat"],
-                "lng": r["lng"]
+                "lat": v["lat"],
+                "lng": v["lng"]
             })
 
     nearby.sort(key=lambda x: x["distance_m"])

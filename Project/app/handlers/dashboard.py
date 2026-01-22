@@ -1,101 +1,90 @@
-from flask import Blueprint, jsonify, request
-from app.extensions import Base, r, get_session
-from app.Database.vendors_model import Vendor
-from app.Database.food_item import FoodItem
-from app.utils.minio.minio_utils import get_minio_file_url
-import json
-from datetime import timedelta
+from flask import Flask, jsonify, request, Blueprint
+from sqlalchemy.orm import Session
+from app.Database.RiderAndStrawler import RiderAndStrawler
+from app.Database.vendors_model import Vendor       # ← changed 'vendor' → 'Vendor' (class name convention)
+from app.extensions import session_scope as session   # assuming this is your scoped session factory
 
-dashboard = Blueprint("vendor_bp", __name__, url_prefix="/dashboard")
+Dashboard_bp = Blueprint("home_bp", __name__, url_prefix="/database")
 
+@Dashboard_bp.route('/nearby', methods=['GET'])     # ← added Blueprint decorator + fixed route path
+def get_nearby():
+    phone = request.args.get('phone')
+    if not phone:
+        return jsonify({"error": "phone is required"}), 400
 
-@dashboard.route("/vendors/dashboard", methods=["GET"])
-def vendor_dashboard():
-    search = request.args.get("search", "").strip().lower()
-    page = int(request.args.get("page", 1))
-    limit = int(request.args.get("limit", 10))
-    offset = (page - 1) * limit
+    home = get_home_location(phone)
+    if not home:
+        return jsonify({"error": "no home location found"}), 404
 
-    cache_key = f"vendors_dashboard:{search or 'all'}:page:{page}:limit:{limit}"
+    lat, lng = home['lat'], home['lng']
 
-    # Redis caching
-    cached_data = r.get(cache_key)
-    if cached_data:
-        print("[CACHE HIT] Returning paginated vendors from Redis cache.")
-        return jsonify(json.loads(cached_data)), 200
+    vendors_nearby = find_nearby_vendors(lat, lng)
+    riders_nearby = find_nearby_rider(lat, lng)
 
-    print("[CACHE MISS] Fetching vendors from DB...")
-    with get_session() as session:
-        # Query vendors
-        query = session.query(Vendor).filter_by(is_open=True)
-        if search:
-            query = query.filter(Vendor.name.ilike(f"%{search}%"))
+    expanded_vendors = []
+    with session() as db:                           # ← most common pattern: session()
+        vendor_ids = [v["vendor_id"] for v in vendors_nearby]
+        vendor_objs = db.query(Vendor).filter(Vendor.id.in_(vendor_ids)).all()
+        vendor_dict = {v.id: v for v in vendor_objs}
 
-        total_vendors = query.count()
-        vendors = query.offset(offset).limit(limit).all()
-
-        result = {
-            "page": page,
-            "limit": limit,
-            "total_vendors": total_vendors,
-            "total_pages": (total_vendors + limit - 1) // limit,
-            "vendors": []
-        }
-
-        for v in vendors:
-            # Query food items for this vendor
-            food_items = session.query(FoodItem).filter_by(
-                vendor_id=v.id,
-                is_available=True
-            ).all()
-
-            items_list = []
-            for item in food_items:
-                item_dict = {
-                    "id": item.id,
-                    "name": item.name,
-                    "price": item.price,
-                    "description": getattr(item, "description", None),
-                    "picture_filename": getattr(item, "picture_filename", None),
-                    "picture_type": getattr(item, "picture_type", None),
-                    "vendor_name": getattr(item, "vendor_name", v.name),
-                    "is_available": item.is_available,
+        for v in vendors_nearby:
+            vendor_obj = vendor_dict.get(v["vendor_id"])
+            if vendor_obj:
+                expanded_vendor = {
+                    "vendor_id": v["vendor_id"],
+                    "distance_m": v["distance_m"],
+                    "lat": v["lat"],
+                    "lng": v["lng"],
+                    "coordinate": {"lat": v["lat"], "lng": v["lng"]},
+                    "business_name": vendor_obj.business_name,
+                    "business_address": vendor_obj.business_address,
+                    "business_email": vendor_obj.business_email,
+                    "business_phone": vendor_obj.business_phone,
+                    "is_open": vendor_obj.is_open,
+                    "is_verified": vendor_obj.is_verified,
+                    "account_name": vendor_obj.account_name,
+                    "account_number": vendor_obj.account_number,
+                    "bank_code": vendor_obj.bank_code,
+                    "bank_name": vendor_obj.bank_name,
+                    "paystack_customer_code": vendor_obj.paystack_customer_code,
+                    "paystack_virtual_account": vendor_obj.paystack_virtual_account,
+                    "created_at": str(vendor_obj.created_at),
+                    "updated_at": str(vendor_obj.updated_at),
                 }
+                expanded_vendors.append(expanded_vendor)
 
-                if getattr(item, "available_from", None):
-                    item_dict["available_from"] = item.available_from.strftime("%H:%M")
-                else:
-                    item_dict["available_from"] = None
+    expanded_riders = []
+    with session() as db:
+        rider_ids = [r["rider_id"] for r in riders_nearby]
+        rider_objs = db.query(RiderAndStrawler).filter(RiderAndStrawler.id.in_(rider_ids)).all()
+        rider_dict = {r.id: r for r in rider_objs}
 
-                if getattr(item, "available_to", None):
-                    item_dict["available_to"] = item.available_to.strftime("%H:%M")
-                else:
-                    item_dict["available_to"] = None
+        for r in riders_nearby:
+            rider_obj = rider_dict.get(r["rider_id"])
+            if rider_obj:
+                expanded_rider = {
+                    "rider_id": r["rider_id"],
+                    "distance_m": r["distance_m"],
+                    "lat": r["lat"],
+                    "lng": r["lng"],
+                    "coordinate": {"lat": r["lat"], "lng": r["lng"]},
+                    "phone": rider_obj.phone,
+                    "status": rider_obj.status,
+                    "is_verified": rider_obj.is_verified,
+                    "address": rider_obj.address,
+                    "completed_rides": rider_obj.completed_rides,
+                    "bank_name": rider_obj.bank_name,
+                    "bank_code": rider_obj.bank_code,
+                    "account_name": rider_obj.account_name,
+                    "account_number": rider_obj.account_number,
+                    "paystack_customer_code": rider_obj.paystack_customer_code,
+                    "paystack_virtual_account": rider_obj.paystack_virtual_account,
+                    "last_update": str(rider_obj.last_update)
+                }
+                expanded_riders.append(expanded_rider)
 
-                try:
-                    if item_dict["vendor_name"] and item_dict["picture_filename"]:
-                        image_url = get_minio_file_url(item_dict["vendor_name"], item_dict["picture_filename"])
-                    else:
-                        image_url = None
-                except Exception as e:
-                    print(f"[MINIO ERROR] vendor={v.id} item={item.id} error={e}")
-                    image_url = None
-
-                item_dict["image_url"] = image_url
-                items_list.append(item_dict)
-
-            result["vendors"].append({
-                "vendor_id": v.id,
-                "vendor_name": v.name,
-                "status": "open" if v.is_open else "closed",
-                "location": v.location,
-                "category": v.category,
-                "average_rating": v.average_rating,
-                "banner_image": v.banner_image,
-                "food_items": items_list
-            })
-
-        # Save to Redis cache for 5 mins
-        r.setex(cache_key, timedelta(minutes=5), json.dumps(result))
-        return jsonify(result), 200
-
+    return jsonify({
+        "home_location": home,
+        "vendors": expanded_vendors,
+        "riders": expanded_riders,
+    })

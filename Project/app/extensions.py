@@ -1,6 +1,8 @@
+
 from sqlalchemy.ext.declarative import declarative_base
 from flask_socketio import SocketIO
 import redis
+from flask import current_app
 from minio import Minio
 from typing import Optional
 from flask import Flask
@@ -10,6 +12,8 @@ from contextlib import contextmanager
 from authlib.integrations.flask_client import OAuth
 from flask_socketio import SocketIO
 from flask_socketio import Namespace
+from geopy.geocoders import Nominatim
+from openai import OpenAI
 
 """create uninitialized extension objects to avoid circular imports"""
 Base = declarative_base()
@@ -31,10 +35,15 @@ def init_db(app: Flask):
     from app.Database.food_item import FoodItem
     from app.Database.order_single import OrderSingle
     from app.Database.order_multiple import OrderMultiple
-    from app.Database.vendor_recieve_pay import Vendor_Payment
+    from app.Database.vendor_payment import Vendor_Payment
     from app.Database.api_payment import Payment_api_database
     from app.Database.order_single import OrderSingle
     from app.Database.order_multiple import OrderMultiple
+    from app.Database.RiderAndStrawler import RiderAndStrawler
+    from app.Database.food_item import  FoodItem 
+    from app.Database.errand import  Errand 
+    from app.Database.profile_merchant import  Profile_Merchant
+    from app.Database.delivery import Delivery
 
     Base.metadata.create_all(bind=engine)
     return engine, SessionLocal
@@ -42,6 +51,9 @@ def init_db(app: Flask):
 """ resources that require app config — created in init_... functions"""
 redis_client: Optional[redis.Redis] = None
 minio_client: Optional[Minio] = None
+
+def get_openai_client():
+    return OpenAI(api_key=current_app.config["OPENAI_API_KEY"])
 
 def get_session():
     if SessionLocal is None:
@@ -53,7 +65,6 @@ def init_redis(app: Flask):
     redis_url = app.config.get("REDIS_URL", "redis://localhost:6379/0")
     r = redis.from_url(redis_url, decode_responses=True)
     return r
-
 
 @contextmanager
 def session_scope():
@@ -68,6 +79,9 @@ def session_scope():
         session.close()
 
 geolocator = Nominatim(user_agent="rideshare_app")
+
+GLOBAL_ROOM = "global"
+TWELVE_FIELDS_M = 1320
 
 def init_minio(app: Flask):
     """Initialize the minio_client using app config. Returns the client."""

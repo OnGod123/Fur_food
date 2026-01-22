@@ -60,3 +60,31 @@ def validate_image_bytes(file_bytes: bytes, filename: str):
         raise ValueError("File is not a valid image")
 
     return True
+
+
+def save_account_number_to_env(account_number, key="ADMIN_ACCOUNT_NUMBER", env_path=".env"):
+    # Read current .env, update or add the key, write back.
+    try:
+        # Read existing .env to memory if exists
+        lines = []
+        updated = False
+        try:
+            with open(env_path, "r") as f:
+                for line in f:
+                    if line.startswith(f"{key}="):
+                        lines.append(f"{key}={account_number}\n")
+                        updated = True
+                    else:
+                        lines.append(line)
+        except FileNotFoundError:
+            pass  # .env doesn't exist yet; we'll create it
+
+        if not updated:
+            lines.append(f"{key}={account_number}\n")
+
+        with open(env_path, "w") as f:
+            f.writelines(lines)
+
+        print(f"Saved {key} to {env_path}")
+    except Exception as ex:
+        print(f"Error updating .env: {ex}")

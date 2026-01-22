@@ -3,15 +3,15 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.Database.base import Base
+from app.extensions import Base
 
 
-class Order_Ride(Base):
+class Ride_Order(Base):
     __tablename__ = "ride_orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user_phone = Column(String(20), nullable=False)
 
     pickup_location = Column(String(255), nullable=False)

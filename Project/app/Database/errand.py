@@ -30,7 +30,7 @@ class Errand(Base):
     # Optional: only filled when persisted (not Redis lock)
     rider_id = Column(
         Integer,
-        ForeignKey("riders.id", ondelete="SET NULL"),
+        ForeignKey("riders_and_strawlers.id", ondelete="SET NULL"),
         nullable=True,
         index=True
     )
@@ -56,7 +56,7 @@ class Errand(Base):
 
     # ---------------- Relationships ----------------
     user = relationship("User", backref="errands")
-    rider = relationship("Rider", backref="errands")
+    rider = relationship("RiderAndStrawler", backref="errands")
 
     # ---------------- Indexes ----------------
     __table_args__ = (

@@ -15,7 +15,6 @@ def create_app(config_object=None):
     oauth.init_app(app)
     
 
-    
     socketio.init_app(app, message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE"))
 
     from app.handlers.home import home_bp
@@ -23,7 +22,7 @@ def create_app(config_object=None):
     from app.handlers.phone_login import auth_bp_phone
     from app.handlers.login_as_guest import loginas_guest_bp
     from app.handlers.signup import signup_bp
-    from app.handlers.dashboard import dashboard
+    from app.handlers.dashboard import Dashboard_bp
     from app.handlers.payment_handler import wallet_payment_bp
     from app.handlers.paystark import paystark_bp
     from app.handlers.monnify import monnify_bp
@@ -36,15 +35,17 @@ def create_app(config_object=None):
     from app.handlers.notifications import notifications_bp
     from app.handlers.search_vendors import search_for_vendor_bp
     from app.handlers.store_handler import store_bp
-    from app.handlers.rider_signup import bp_rider_login
-    from app.handlers.whatsapp_handler import whatsapp_bp
+    from app.handlers.rider_signup import sign_up_riderbp
+    from app.handlers.whatsapp_handler import bp_whatsapp
     from app.handlers.delivery import delivery_bp
-    from app.handlers.socket.gblobal import GlobalNamespace
+    from app.handlers.socket.global_namespace import GlobalNamespace
     from app.handlers.socket.private_websocket import PrivateNamespace
-    from app.handlers.errand import send_erand_bp
+    from app.handlers.errand import send_errand_bp
     from app.handlers.order_rider import order_ride_bp
     from app.handlers.accept_errand import accept_errand_bp
     from app.handlers.accept_ride import order_ride_bp 
+    from app.handlers.admin import admin_bp
+    
 
 
 
@@ -53,7 +54,7 @@ def create_app(config_object=None):
     app.register_blueprint(auth_bp_phone)
     app.register_blueprint(loginas_guest_bp)
     app.register_blueprint(signup_bp)
-    app.register_blueprint(dashboard)
+    app.register_blueprint(Dashboard_bp)
     app.register_blueprint(wallet_payment_bp)
     app.register_blueprint(paystark_bp)
     app.register_blueprint(monnify_bp)
@@ -65,13 +66,14 @@ def create_app(config_object=None):
     app.register_blueprint(notifications_bp)
     app.register_blueprint(search_for_vendor_bp)
     app.register_blueprint(store_bp)
-    app.register_blueprint(bp_rider_login)
+    app.register_blueprint(sign_up_riderbp)
     app.register_blueprint(bp_vendor_register)
-    app.register_blueprint(whatsapp_bp)
     app.register_blueprint(delivery_bp)
-    app.register_blueprint(send_erand_bp)
+    app.register_blueprint(send_errand_bp)
     app.register_blueprint(order_ride_bp)
     app.register_blueprint(accept_errand_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(bp_whatsapp)
     socketio.on_namespace(GlobalNamespace("/global"))
     socketio.on_namespace(PrivateNamespace("/private"))
 

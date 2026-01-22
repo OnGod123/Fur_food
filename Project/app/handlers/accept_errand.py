@@ -1,12 +1,12 @@
 
 from flask import Blueprint, request, jsonify, g
 from app.extensions import r, socketio, session_scope
-from app.database.user_models import User
-from app.database.rider_models import Rider
-from app.merchants.Database.errand import Errand
+from app.Database.user_models import User
+from app.Database.  RiderAndStrawler import RiderAndStrawler
+from app.Database.errand import Errand
 from app.utils.jwt_tokens.verify_rider import verify_rider_jwt
 from app.utils.jwt_tokens.verify_user import verify_jwt_token
-from app.utils.whatsapp_client import send_whatsapp_message  # import your wrapper
+from app.utils.whatsapp_utils.whatsapp_utils import send_whatsapp_message  
 
 accept_errand_bp = Blueprint("accept_errand_bp", __name__)
 GLOBAL_ROOM = "all_participants"

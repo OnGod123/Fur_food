@@ -14,7 +14,7 @@ from app.extensions import Base
 
 
 
-class AcceptRide(Base):
+class RideAcceptance(Base):
     __tablename__ = "accept_rides"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -3,12 +3,14 @@ from datetime import datetime
 from flask import request, g
 from flask_socketio import Namespace, emit, join_room
 from app.extensions import socketio, r as redis
-from app.utils.jwt_tokens.token_identify import identify_token, TokenIdentifyError
-from app.database.user_models import User
-from app.database.rider_models import Rider
-from app.database.vendor_models import Vendor
+from app.utils.jwt_tokens.identify_token import identify_token
+from app.Database.user_models import User
+from app.Database. RiderAndStrawler import  RiderAndStrawler as  Rider
+from app.Database.vendors_model import Vendor
 from app.extensions import session_scope
 
+class TokenIdentifyError(Exception):
+    pass
 
 def participant_exists(username: str) -> bool:
     with session_scope() as session:

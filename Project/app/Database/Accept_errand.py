@@ -14,7 +14,7 @@ from app.extensions import Base
 
 
 
-class AcceptErrand(Base):
+class ErrandAcceptance(Base):
     __tablename__ = "accept_errands"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

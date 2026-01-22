@@ -1,16 +1,18 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import socketio, session_scope, redis_client
-from app.database.user_models import User, RiderAndStrawler
-from app.merchants.Database.rideshare import RideShare
+from app.Database.user_models import User 
+from app.Database.RiderAndStrawler import RiderAndStrawler
 from geopy.geocoders import Nominatim
 from datetime import datetime
 from app.utils.jwt_tokens.verify_user import verify_jwt_token
-from app.handler.socket.utils.city_database_utils import geocode_address
+from app.handlers.socket.utils.city_database_utils import geocode_address
+from app.extensions import geolocator
 
 TWELVE_FIELDS_M = 1320  
 GLOBAL_ROOM = "all_participants"
-order_ride_bp = Blueprint("delivery_bp", __name__)
-geolocator = Nominatim(user_agent="rideshare_app")
+
+
+order_ride_bp = Blueprint("order-ride", __name__)
 
 @order_ride_bp.route("/user/order_ride", methods=["POST"])
 @verify_jwt_token
@@ -37,7 +39,7 @@ def order_ride(user):
 
 
     if mode == "manual":
-         address = data.get("address")
+        address = data.get("address")
         if not address:
             return jsonify({"error": "Pickup address required"}), 400
 

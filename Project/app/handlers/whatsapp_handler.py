@@ -5,10 +5,10 @@ from functools import wraps
 from flask import Blueprint, jsonify, current_app
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from app.whatsapp.whatsapphandler import WhatsAppClient,  WhatsAppFlow
- 
+from app.whatsapp.watsapphandler import WhatsAppClient,  WhatsAppFlow
+from flask import Blueprint, render_template, request
 
-whatsapp_bp = Blueprint("whatsapp_bp", __name__, url_prefix="/whatsapp")
+bp_whatsapp = Blueprint("whatsapp", __name__, url_prefix="/whatsapp")
 
 def verify_whatsapp_signature(raw_body: bytes, signature_header: str, app_secret: str) -> bool:
     if not signature_header or not app_secret:
@@ -20,10 +20,10 @@ def verify_whatsapp_signature(raw_body: bytes, signature_header: str, app_secret
     mac = hmac.new(app_secret.encode('utf-8'), msg=raw_body, digestmod=hashlib.sha256)
     return hmac.compare_digest(mac.hexdigest(), sig_hex)
 
-@whatsapp_bp.route("", method=["POST"})
-def whatsaphandlers:
 
-      raw_body = request.get_data()
+@bp_whatsapp.route("", methods=["POST"])
+def whatsaphandlers():
+    raw_body = request.get_data()
     signature = request.headers.get('X-Hub-Signature-256') or request.headers.get('x-hub-signature-256')
     app_secret = current_app.config.get('WHATSAPP_APP_SECRET')
 
@@ -51,8 +51,7 @@ def whatsaphandlers:
     return flow.run()
 
 
-
-@whatsapp_bp.route('/webhook', methods=['GET'])
+@bp_whatsapp.route('/webhook', methods=['GET'])
 def verify_whatsapp():
     mode = request.args.get('hub.mode')
     token = request.args.get('hub.verify_token')

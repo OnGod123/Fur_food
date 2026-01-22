@@ -1,5 +1,5 @@
-from app.merchants.Database.delivery import Delivery
-from app.riders.services import auto_assign_rider
+from app.Database.delivery import Delivery
+
 
 def create_delivery(
     session,

@@ -7,7 +7,7 @@ from app.Database.order_single import OrderSingle
 from app.Database.RiderAndStrawler import RiderAndStrawler as Rider
 from app.Database.user_models import User
 
-delivery_bp = Blueprint("delivery_bp", __name__)
+delivery_bp = Blueprint("delivery", __name__, url_prefix="/delivery")
 
 GLOBAL_ROOM = "all_participants"
 

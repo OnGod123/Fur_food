@@ -76,7 +76,7 @@ def notify_vendor_from_order():
 
 
 from flask import Blueprint, jsonify, g
-from app.Database.notification import Notification
+from app.Database.notifications import Notification
 from app.Database.order_multiple import OrderMultiple
 from app.utils.jwt_tokens.authentication import vendor_required
 

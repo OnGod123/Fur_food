@@ -3,7 +3,7 @@ Defines the Vendor model for restaurants/food vendors.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, Time, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Time, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from app.extensions import Base
 from app.Database.profile_merchant import Profile_Merchant

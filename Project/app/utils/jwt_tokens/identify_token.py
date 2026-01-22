@@ -1,11 +1,10 @@
-from app.utils.jwt_tokens.vendor_token import decode_jwt_token
-from app.utils.jwt_tokens.genearte_jwt import decode_rider_jwt
+from app.utils.jwt_tokens.generate_jwt import decode_jwt_token
+from app.utils.jwt_tokens.generate_jwt import decode_rider_jwt
 from app.utils.jwt_tokens.vendor_token import decode_vendor_jwt
 
 
 class TokenIdentifyError(Exception):
     pass
-
 
 def identify_token(token: str) -> dict:
     """
